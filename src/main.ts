@@ -56,6 +56,13 @@ async function run(): Promise<void> {
     const config_file_contents = YAML.parse(config_file)
 
     console.log(config_file_contents.rerequest_review)
+    let rerequest_review: boolean = config_file_contents.rerequest_review
+
+    if(!rerequest_review) {
+      console.log(`IF HIT - rerequest_review = ${rerequest_review}`)
+    } else {
+      console.log(`ELSE HIT - reresquest_review = ${rerequest_review}`)
+    }
 
     const reviewer_persons: string[] = []
     const reviewer_teams: string[] = []

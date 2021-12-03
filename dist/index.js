@@ -86,6 +86,13 @@ function run() {
             // Parse contents of config file into variable
             const config_file_contents = YAML.parse(config_file);
             console.log(config_file_contents.rerequest_review);
+            let rerequest_review = config_file_contents.rerequest_review;
+            if (!rerequest_review) {
+                console.log(`IF HIT - rerequest_review = ${rerequest_review}`);
+            }
+            else {
+                console.log(`ELSE HIT - reresquest_review = ${rerequest_review}`);
+            }
             const reviewer_persons = [];
             const reviewer_teams = [];
             for (const reviewers of config_file_contents.approvals.groups) {
