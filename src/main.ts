@@ -6,10 +6,7 @@ import * as YAML from 'yaml'
 import { EOL } from 'os'
 import { Settings, ReviewGatekeeper } from './review_gatekeeper'
 
-export async function assignReviewers(client: any,
-                                      reviewer_persons: string[],
-                                      reviewer_teams: string[],
-                                      pr_number: number) {
+export async function assignReviewers(client: any, reviewer_persons: string[], reviewer_teams: string[], pr_number: number) {
   try {
     console.log(`entering assignReviewers`)
     if (reviewer_persons.length || reviewer_teams.length) {
@@ -58,14 +55,13 @@ async function run(): Promise<void> {
     // Parse contents of config file into variable
     const config_file_contents = YAML.parse(config_file)
 
-    const reviewer_persons: string[] = []
-    for (const persons of config_file_contents.approvals.groups) {
-      reviewer_persons.push(persons.from.person)
-    }
+    console.log(config_file_contents.rerequest_review)
 
+    const reviewer_persons: string[] = []
     const reviewer_teams: string[] = []
-    for (const teams of config_file_contents.approvals.groups) {
-      reviewer_teams.push(teams.from.team)
+    for (const reviewers of config_file_contents.approvals.groups) {
+      reviewer_persons.push(reviewers.from.person)
+      reviewer_teams.push(reviewers.from.team)
     }
 
     // const reviewsParam = {
