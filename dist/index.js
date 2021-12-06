@@ -76,7 +76,7 @@ function run() {
                 return;
             }
             const payload = context.payload;
-            const custom_review_required = core.getInput('custom_review_required');
+            const custom_review_required = process.env.CUSTOM_REVIEW_REQUIRED;
             console.log(`custom revie status: ${custom_review_required}`);
             const token = core.getInput('token');
             const octokit = github.getOctokit(token);

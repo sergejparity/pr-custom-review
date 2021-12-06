@@ -43,7 +43,7 @@ async function run(): Promise<void> {
       | Webhooks.PullRequestEvent
       | Webhooks.PullRequestReviewEvent
 
-    const custom_review_required = core.getInput('custom_review_required')
+    const custom_review_required = process.env.CUSTOM_REVIEW_REQUIRED
     console.log(`custom revie status: ${custom_review_required}`)
     const token: string = core.getInput('token')
     const octokit = github.getOctokit(token)
