@@ -6,7 +6,6 @@ export interface Settings {
       name: string
       from: {
         person?: string[]
-        team?: string[]
       }
     }[]
   }

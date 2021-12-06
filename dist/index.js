@@ -42,20 +42,18 @@ const fs = __importStar(__nccwpck_require__(5747));
 const YAML = __importStar(__nccwpck_require__(3552));
 const os_1 = __nccwpck_require__(2087);
 const review_gatekeeper_1 = __nccwpck_require__(302);
-function assignReviewers(client, reviewer_persons, reviewer_teams, pr_number) {
+function assignReviewers(client, reviewer_persons, pr_number) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             console.log(`entering assignReviewers`);
-            if (reviewer_persons.length || reviewer_teams.length) {
+            if (reviewer_persons.length) {
                 yield client.rest.pulls.requestReviewers({
                     owner: github.context.repo.owner,
                     repo: github.context.repo.repo,
                     pull_number: pr_number,
                     reviewers: reviewer_persons[0],
-                    // UNCOMMENT IF USING PAT TOKEN team_reviewers: reviewer_teams[0],
                 });
                 core.info(`Requested review from: ${reviewer_persons}.`);
-                // UNCOMMENT IF USING PAT TOKEN core.info(`Assigned team reviews to ${reviewer_teams}.`)
             }
             console.log(`exiting assignReviewers`);
         }
@@ -77,12 +75,12 @@ function run() {
             }
             const payload = context.payload;
             const custom_review_required = process.env.CUSTOM_REVIEW_REQUIRED;
-            console.log(`custom revie status: ${custom_review_required}`);
             const token = core.getInput('token');
             const octokit = github.getOctokit(token);
             const pr_number = payload.pull_request.number;
             const sha = payload.pull_request.head.sha;
             const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`;
+            // No breaking changes - no cry. Set status OK and exit.
             if (custom_review_required == 'not_required') {
                 console.log(`Special approval of this PR is not required.`);
                 octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'success', context: 'PR Custom Review Status', target_url: workflow_url, description: "Special approval of this PR is not required." }));
@@ -92,22 +90,18 @@ function run() {
             const config_file = fs.readFileSync(core.getInput('config-file'), 'utf8');
             // Parse contents of config file into variable
             const config_file_contents = YAML.parse(config_file);
-            console.log(config_file_contents.rerequest_review);
-            let rerequest_review = config_file_contents.rerequest_review;
             const reviewer_persons = [];
-            const reviewer_teams = [];
             for (const reviewers of config_file_contents.approvals.groups) {
                 reviewer_persons.push(reviewers.from.person);
-                reviewer_teams.push(reviewers.from.team);
             }
             // Request reviews if eventName == pull_request
             if (context.eventName == 'pull_request') {
-                console.log(`We are going to request someones approval!!!`);
-                assignReviewers(octokit, reviewer_persons, reviewer_teams, pr_number);
+                console.log(`I'm going to request someones approval!!!`);
+                assignReviewers(octokit, reviewer_persons, pr_number);
                 octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'failure', context: 'PR Custom Review Status', target_url: workflow_url, description: `PR contains changes subject to special review. Review requested from: ${reviewer_persons.join(', ')}` }));
             }
             else {
-                console.log(`We don't care about requesting approvals! We'll just check who already approved`);
+                console.log(`I don't care about requesting approvals! We'll just check who already approved`);
                 //retrieve approvals
                 const reviews = yield octokit.rest.pulls.listReviews(Object.assign(Object.assign({}, context.repo), { pull_number: payload.pull_request.number }));
                 const approved_users = new Set();
@@ -119,15 +113,13 @@ function run() {
                 }
                 // check approvals
                 const review_gatekeeper = new review_gatekeeper_1.ReviewGatekeeper(config_file_contents, Array.from(approved_users), payload.pull_request.user.login);
-                console.log(`sha: ${sha}`);
                 // The workflow url can be obtained by combining several environment varialbes, as described below:
                 // https://docs.github.com/en/actions/reference/environment-variables#default-environment-variables
-                console.log(`workflow_url: ${workflow_url}`);
                 core.info(`Setting a status on commit (${sha})`);
                 octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: review_gatekeeper.satisfy() ? 'success' : 'failure', context: 'PR Custom Review Status', target_url: workflow_url, description: review_gatekeeper.satisfy()
                         ? undefined
                         : review_gatekeeper.getMessages().join(' ') }));
-                if (!review_gatekeeper.satisfy() && context.eventName == 'pull_request_review') {
+                if (!review_gatekeeper.satisfy()) {
                     core.setFailed(review_gatekeeper.getMessages().join(os_1.EOL));
                     return;
                 }

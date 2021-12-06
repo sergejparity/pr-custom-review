@@ -6,19 +6,17 @@ import * as YAML from 'yaml'
 import { EOL } from 'os'
 import { Settings, ReviewGatekeeper } from './review_gatekeeper'
 
-export async function assignReviewers(client: any, reviewer_persons: string[], reviewer_teams: string[], pr_number: number) {
+export async function assignReviewers(client: any, reviewer_persons: string[], pr_number: number) {
   try {
     console.log(`entering assignReviewers`)
-    if (reviewer_persons.length || reviewer_teams.length) {
+    if (reviewer_persons.length) {
       await client.rest.pulls.requestReviewers({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
         pull_number: pr_number,
         reviewers: reviewer_persons[0],
-        // UNCOMMENT IF USING PAT TOKEN team_reviewers: reviewer_teams[0],
       });
       core.info(`Requested review from: ${reviewer_persons}.`);
-      // UNCOMMENT IF USING PAT TOKEN core.info(`Assigned team reviews to ${reviewer_teams}.`)
     }
     console.log(`exiting assignReviewers`)
   } catch (error) {
@@ -44,13 +42,13 @@ async function run(): Promise<void> {
       | Webhooks.PullRequestReviewEvent
 
     const custom_review_required = process.env.CUSTOM_REVIEW_REQUIRED
-    console.log(`custom revie status: ${custom_review_required}`)
     const token: string = core.getInput('token')
     const octokit = github.getOctokit(token)
     const pr_number = payload.pull_request.number
     const sha = payload.pull_request.head.sha
     const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`
 
+    // No breaking changes - no cry. Set status OK and exit.
     if ( custom_review_required == 'not_required' ) {
       console.log(`Special approval of this PR is not required.`)
 
@@ -71,20 +69,15 @@ async function run(): Promise<void> {
     // Parse contents of config file into variable
     const config_file_contents = YAML.parse(config_file)
 
-    console.log(config_file_contents.rerequest_review)
-    let rerequest_review: boolean = config_file_contents.rerequest_review
-
     const reviewer_persons: string[] = []
-    const reviewer_teams: string[] = []
     for (const reviewers of config_file_contents.approvals.groups) {
       reviewer_persons.push(reviewers.from.person)
-      reviewer_teams.push(reviewers.from.team)
     }
 
     // Request reviews if eventName == pull_request
     if (context.eventName == 'pull_request') {
-      console.log(`We are going to request someones approval!!!`)
-      assignReviewers(octokit, reviewer_persons, reviewer_teams, pr_number)
+      console.log(`I'm going to request someones approval!!!`)
+      assignReviewers(octokit, reviewer_persons, pr_number)
 
       octokit.rest.repos.createCommitStatus({
         ...context.repo,
@@ -96,7 +89,7 @@ async function run(): Promise<void> {
       })
 
     } else {
-      console.log(`We don't care about requesting approvals! We'll just check who already approved`)
+      console.log(`I don't care about requesting approvals! We'll just check who already approved`)
 
       //retrieve approvals
       const reviews = await octokit.rest.pulls.listReviews({
@@ -118,10 +111,8 @@ async function run(): Promise<void> {
         payload.pull_request.user.login
       )
 
-      console.log(`sha: ${sha}`)
       // The workflow url can be obtained by combining several environment varialbes, as described below:
       // https://docs.github.com/en/actions/reference/environment-variables#default-environment-variables
-      console.log(`workflow_url: ${workflow_url}`)
       core.info(`Setting a status on commit (${sha})`)
 
 
@@ -136,7 +127,7 @@ async function run(): Promise<void> {
           : review_gatekeeper.getMessages().join(' ')
       })
 
-      if (!review_gatekeeper.satisfy() && context.eventName == 'pull_request_review') {
+      if (!review_gatekeeper.satisfy()) {
         core.setFailed(review_gatekeeper.getMessages().join(EOL))
         return
       }
