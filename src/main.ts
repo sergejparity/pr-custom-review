@@ -51,6 +51,20 @@ async function run(): Promise<void> {
     const sha = payload.pull_request.head.sha
     const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`
 
+    if ( custom_review_required == 'not_required' ) {
+      console.log(`Special approval of this PR is not required.`)
+
+      octokit.rest.repos.createCommitStatus({
+        ...context.repo,
+        sha,
+        state: 'success',
+        context: 'PR Custom Review Status',
+        target_url: workflow_url,
+        description: "Special approval of this PR is not required."
+      })
+      return
+    }
+
     // Read values from config file if it exists
     const config_file = fs.readFileSync(core.getInput('config-file'), 'utf8')
 
@@ -119,7 +133,7 @@ async function run(): Promise<void> {
         target_url: workflow_url,
         description: review_gatekeeper.satisfy()
           ? undefined
-          : review_gatekeeper.getMessages().join(' ').substr(0, 140)
+          : review_gatekeeper.getMessages().join(' ')
       })
 
       if (!review_gatekeeper.satisfy() && context.eventName == 'pull_request_review') {
