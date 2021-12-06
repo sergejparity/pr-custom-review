@@ -92,7 +92,7 @@ async function run(): Promise<void> {
         state: 'failure',
         context: 'PR Custom Review Status',
         target_url: workflow_url,
-        description: "PR contains changes subject to special review"
+        description: `PR contains changes subject to special review. Review requested from: ${reviewer_persons.join(', ')}`
       })
 
     } else {
