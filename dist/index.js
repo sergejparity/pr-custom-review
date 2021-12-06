@@ -87,60 +87,43 @@ function run() {
             const config_file_contents = YAML.parse(config_file);
             console.log(config_file_contents.rerequest_review);
             let rerequest_review = config_file_contents.rerequest_review;
-            if (!rerequest_review) {
-                console.log(`IF HIT - rerequest_review = ${rerequest_review}`);
-            }
-            else {
-                console.log(`ELSE HIT - reresquest_review = ${rerequest_review}`);
-            }
             const reviewer_persons = [];
             const reviewer_teams = [];
             for (const reviewers of config_file_contents.approvals.groups) {
                 reviewer_persons.push(reviewers.from.person);
                 reviewer_teams.push(reviewers.from.team);
             }
-            // const reviewsParam = {
-            //   ...context.repo,
-            //   pull_number: pr_number,
-            // };
-            // const reviewsResponse = await octokit.rest.pulls.listReviews(reviewsParam);
-            // const reviews = new Map();
-            // reviewsResponse.data.forEach(review => {
-            //   reviews.set(review.user?.login, review.state);
-            // });
-            // core.info(`Latest Reviews`);
-            // reviews.forEach((value, key) => {
-            //   core.info(`${key} = ${value}`);
-            // });
             // Request reviews if eventName == pull_request
             if (context.eventName == 'pull_request') {
                 console.log(`We are going to request someones approval!!!`);
                 assignReviewers(octokit, reviewer_persons, reviewer_teams, pr_number);
-                octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'failure', context: 'PR Gatekeeper Status', target_url: workflow_url, description: "PR contains changes subject to special review" }));
+                octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'failure', context: 'PR Custom Review Status', target_url: workflow_url, description: "PR contains changes subject to special review" }));
             }
-            console.log(`We don't care about requesting approvals! We'll just check who already approved`);
-            //retrieve approvals
-            const reviews = yield octokit.rest.pulls.listReviews(Object.assign(Object.assign({}, context.repo), { pull_number: payload.pull_request.number }));
-            const approved_users = new Set();
-            for (const review of reviews.data) {
-                if (review.state === `APPROVED`) {
-                    approved_users.add(review.user.login);
-                    console.log(`Approval from: ${review.user.login}`);
+            else {
+                console.log(`We don't care about requesting approvals! We'll just check who already approved`);
+                //retrieve approvals
+                const reviews = yield octokit.rest.pulls.listReviews(Object.assign(Object.assign({}, context.repo), { pull_number: payload.pull_request.number }));
+                const approved_users = new Set();
+                for (const review of reviews.data) {
+                    if (review.state === `APPROVED`) {
+                        approved_users.add(review.user.login);
+                        console.log(`Approval from: ${review.user.login}`);
+                    }
                 }
-            }
-            // check approvals
-            const review_gatekeeper = new review_gatekeeper_1.ReviewGatekeeper(config_file_contents, Array.from(approved_users), payload.pull_request.user.login);
-            console.log(`sha: ${sha}`);
-            // The workflow url can be obtained by combining several environment varialbes, as described below:
-            // https://docs.github.com/en/actions/reference/environment-variables#default-environment-variables
-            console.log(`workflow_url: ${workflow_url}`);
-            core.info(`Setting a status on commit (${sha})`);
-            octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: review_gatekeeper.satisfy() ? 'success' : 'failure', context: 'PR Gatekeeper Status', target_url: workflow_url, description: review_gatekeeper.satisfy()
-                    ? undefined
-                    : review_gatekeeper.getMessages().join(' ').substr(0, 140) }));
-            if (!review_gatekeeper.satisfy() && context.eventName == 'pull_request_review') {
-                core.setFailed(review_gatekeeper.getMessages().join(os_1.EOL));
-                return;
+                // check approvals
+                const review_gatekeeper = new review_gatekeeper_1.ReviewGatekeeper(config_file_contents, Array.from(approved_users), payload.pull_request.user.login);
+                console.log(`sha: ${sha}`);
+                // The workflow url can be obtained by combining several environment varialbes, as described below:
+                // https://docs.github.com/en/actions/reference/environment-variables#default-environment-variables
+                console.log(`workflow_url: ${workflow_url}`);
+                core.info(`Setting a status on commit (${sha})`);
+                octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: review_gatekeeper.satisfy() ? 'success' : 'failure', context: 'PR Custom Review Status', target_url: workflow_url, description: review_gatekeeper.satisfy()
+                        ? undefined
+                        : review_gatekeeper.getMessages().join(' ').substr(0, 140) }));
+                if (!review_gatekeeper.satisfy() && context.eventName == 'pull_request_review') {
+                    core.setFailed(review_gatekeeper.getMessages().join(os_1.EOL));
+                    return;
+                }
             }
         }
         catch (error) {
