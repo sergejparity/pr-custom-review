@@ -101,9 +101,9 @@ async function run(): Promise<void> {
       for (const review of reviews.data) {
         if (review.state === `APPROVED`) {
           approved_users.add(review.user!.login)
-          console.log(`Approval from: ${review.user!.login}`)
+          console.log(`Approval from: ${review.state} ' at ' ${review.submitted_at} ' --- ' ${review.user!.login}`)
         } else {
-          console.log(`Another state: ${review.state} ' --- ' ${review.user!.login}`)
+          console.log(`Another state: ${review.state} ' at ' ${review.submitted_at} ' --- ' ${review.user!.login}`)
         }
       }
 
