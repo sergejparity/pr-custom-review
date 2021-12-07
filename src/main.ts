@@ -101,12 +101,15 @@ async function run(): Promise<void> {
       for (const review of reviews.data) {
         if (review.state === `APPROVED`) {
           approved_users.add(review.user!.login)
-          console.log(`Approval from: ${review.state} ' at ' ${review.submitted_at} ' --- ' ${review.user!.login}`)
+          console.log(`Approval from: ${review.state} ' --- ' ${review.user!.login}`)
         } else {
-          console.log(`Another state: ${review.state} ' at ' ${review.submitted_at} ' --- ' ${review.user!.login}`)
+          approved_users.delete(review.user!.login)
+          console.log(`Another state: ${review.state} ' --- ' ${review.user!.login}`)
         }
       }
 
+      console.log(approved_users)
+      
       // check approvals
       const review_gatekeeper = new ReviewGatekeeper(
         config_file_contents as Settings,

@@ -109,12 +109,14 @@ function run() {
                 for (const review of reviews.data) {
                     if (review.state === `APPROVED`) {
                         approved_users.add(review.user.login);
-                        console.log(`Approval from: ${review.user.login}`);
+                        console.log(`Approval from: ${review.state} ' --- ' ${review.user.login}`);
                     }
                     else {
+                        approved_users.delete(review.user.login);
                         console.log(`Another state: ${review.state} ' --- ' ${review.user.login}`);
                     }
                 }
+                console.log(approved_users);
                 // check approvals
                 const review_gatekeeper = new review_gatekeeper_1.ReviewGatekeeper(config_file_contents, Array.from(approved_users), payload.pull_request.user.login);
                 // The workflow url can be obtained by combining several environment varialbes, as described below:
