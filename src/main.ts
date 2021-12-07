@@ -108,8 +108,6 @@ async function run(): Promise<void> {
         }
       }
 
-      console.log(approved_users)
-      
       // check approvals
       const review_gatekeeper = new ReviewGatekeeper(
         config_file_contents as Settings,
