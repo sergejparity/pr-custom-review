@@ -74,11 +74,11 @@ function run() {
                 return;
             }
             const payload = context.payload;
-            const custom_review_required = process.env.CUSTOM_REVIEW_REQUIRED;
             const token = core.getInput('token');
             const octokit = github.getOctokit(token);
             const pr_number = payload.pull_request.number;
             const sha = payload.pull_request.head.sha;
+            const custom_review_required = process.env.CUSTOM_REVIEW_REQUIRED;
             const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`;
             const workflow_name = `${process.env.GITHUB_WORKFLOW}`;
             // No breaking changes - no cry. Set status OK and exit.
@@ -110,6 +110,9 @@ function run() {
                     if (review.state === `APPROVED`) {
                         approved_users.add(review.user.login);
                         console.log(`Approval from: ${review.user.login}`);
+                    }
+                    else {
+                        console.log(`Another state: ${review.state} ' --- ' ${review.user.login}`);
                     }
                 }
                 // check approvals
