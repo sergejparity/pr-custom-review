@@ -27,14 +27,12 @@ approvals:
         person: # list of individual users to request and check approvals. Works with default GITHUB_TOKEN
           - user1
           - user2
-        team: # list of teams to request and check approvals works only when token with special scope used
-          - team1
-          - team2
     - name: reviewers_group2
       minimum: 2
       from:
-        - user3
-        - user4
+        person:
+          - user3
+          - user4
 ```
 
 ### Workflow config

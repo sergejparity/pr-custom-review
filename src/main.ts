@@ -47,6 +47,7 @@ async function run(): Promise<void> {
     const pr_number = payload.pull_request.number
     const sha = payload.pull_request.head.sha
     const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`
+    const workflow_name = `${process.env.GITHUB_WORKFLOW}`
 
     // No breaking changes - no cry. Set status OK and exit.
     if ( custom_review_required == 'not_required' ) {
@@ -56,7 +57,7 @@ async function run(): Promise<void> {
         ...context.repo,
         sha,
         state: 'success',
-        context: 'PR Custom Review Status',
+        context: workflow_name,
         target_url: workflow_url,
         description: "Special approval of this PR is not required."
       })
@@ -83,7 +84,7 @@ async function run(): Promise<void> {
         ...context.repo,
         sha,
         state: 'failure',
-        context: 'PR Custom Review Status',
+        context: workflow_name,
         target_url: workflow_url,
         description: `PR contains changes subject to special review. Review requested from: ${reviewer_persons.join(', ')}`
       })
@@ -120,7 +121,7 @@ async function run(): Promise<void> {
         ...context.repo,
         sha,
         state: review_gatekeeper.satisfy() ? 'success' : 'failure',
-        context: 'PR Custom Review Status',
+        context: workflow_name,
         target_url: workflow_url,
         description: review_gatekeeper.satisfy()
           ? undefined
