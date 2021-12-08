@@ -92,6 +92,21 @@ async function run(): Promise<void> {
     console.log(`persons: ${reviewer_persons}`)
     console.log(`teams: ${reviewer_teams}`)
 
+    console.log(octokit.rest.teams.listForAuthenticatedUser())
+
+    const team_obj = await octokit.rest.teams.list({
+      org: 'paritytech'
+    });
+
+    console.log(`team list: ${team_obj}`)
+
+    const team_list_obj = await octokit.rest.teams.listMembersInOrg({
+      org: 'paritytech',
+      team_slug: 's737team'
+    });
+
+    console.log(`team_list_obj: ${team_list_obj}`)
+
     // Request reviews if eventName == pull_request
     if (context.eventName == 'pull_request') {
       console.log(`I'm going to request someones approval!!!`)
