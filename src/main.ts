@@ -106,8 +106,8 @@ async function run(): Promise<void> {
       team_slug: 's737team'
     });
 
-    for (const member in team_list_obj.data){
-      console.log(`team_list_obj: ${member.toString()}`)
+    for (const member of team_list_obj.data){
+      console.log(`team_list_obj: ${member!.login!}`)
     }
     
 

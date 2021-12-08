@@ -117,8 +117,8 @@ function run() {
             });
             console.log(`team list: ${team_obj.data}`);
             const team_list_obj = yield octokit.rest.teams.listMembersInOrg(Object.assign(Object.assign({}, context.repo), { org: 's737testOrg', team_slug: 's737team' }));
-            for (const member in team_list_obj.data) {
-                console.log(`team_list_obj: ${member.toString()}`);
+            for (const member of team_list_obj.data) {
+                console.log(`team_list_obj: ${member.login}`);
             }
             // Request reviews if eventName == pull_request
             if (context.eventName == 'pull_request') {
