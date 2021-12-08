@@ -109,6 +109,8 @@ function run() {
                 reviewer_persons.push(reviewers.from.persons);
                 reviewer_teams.push(reviewers.from.teams);
             }
+            console.log(`persons: ${reviewer_persons}`);
+            console.log(`teams: ${reviewer_teams}`);
             // Request reviews if eventName == pull_request
             if (context.eventName == 'pull_request') {
                 console.log(`I'm going to request someones approval!!!`);
