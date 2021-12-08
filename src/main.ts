@@ -84,15 +84,23 @@ async function run(): Promise<void> {
 
     const reviewer_persons: string[] = []
     const reviewer_teams: string[] = []
+    const reviewer_persons_set: Set<string> = new Set()
+    const reviewer_teams_set: Set<string> = new Set()
     for (const reviewers of config_file_contents.approvals.groups) {
       reviewer_persons.push(reviewers.from.persons)
+      reviewer_persons_set.add(reviewers.from.persons)
       reviewer_teams.push(reviewers.from.teams)
+      reviewer_teams_set.add(reviewers.from.teams)
     }
 
     console.log(`persons: ${reviewer_persons}`)
     console.log(`teams: ${reviewer_teams}`)
+    console.log(`persons set: ${reviewer_persons_set}`)
+    console.log(`teams set: ${reviewer_teams_set}`)
 
     // console.log(octokit.rest.teams.listForAuthenticatedUser())
+    const organization = process.env.GITHUB_REPOSITORY?.split("/")[0]
+    console.log(`org: ${organization}`)
 
     const team_obj = await octokit.rest.teams.list({
       ...context.repo,
