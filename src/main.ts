@@ -9,8 +9,8 @@ import { Settings, ReviewGatekeeper } from './review_gatekeeper'
 export async function assignReviewers(client: any, reviewer_persons: string[], reviewer_teams: string[], pr_number: number) {
   try {
     console.log(`entering assignReviewers`)
-    console.log(`persons length: ${reviewer_persons.length} - ${reviewer_persons[0].length}`)
-    if (reviewer_persons[0].length) {
+    console.log(`persons length: ${reviewer_persons.length} - ${reviewer_persons[0]}`)
+    if (reviewer_persons[0]) {
       await client.rest.pulls.requestReviewers({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
@@ -20,8 +20,8 @@ export async function assignReviewers(client: any, reviewer_persons: string[], r
       core.info(`Requested review from users: ${reviewer_persons[0]}.`);
     }
     console.log(`passed by persons trying teams`)
-    console.log(`teams length: ${reviewer_teams[0].length}`)
-    if (reviewer_teams[0].length) {
+    console.log(`teams length: ${reviewer_teams[0]}`)
+    if (reviewer_teams[0]) {
       await client.rest.pulls.requestReviewers({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
