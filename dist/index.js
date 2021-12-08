@@ -94,6 +94,7 @@ function run() {
             const custom_review_required = process.env.CUSTOM_REVIEW_REQUIRED;
             const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`;
             const workflow_name = `${process.env.GITHUB_WORKFLOW}`;
+            const organization = (_a = process.env.GITHUB_REPOSITORY) === null || _a === void 0 ? void 0 : _a.split("/")[0];
             // No breaking changes - no cry. Set status OK and exit.
             if (custom_review_required == 'not_required') {
                 console.log(`Special approval of this PR is not required.`);
@@ -119,13 +120,12 @@ function run() {
             console.log(`persons set: ${reviewer_persons_set}`);
             console.log(`teams set: ${reviewer_teams_set}`);
             // console.log(octokit.rest.teams.listForAuthenticatedUser())
-            const organization = (_a = process.env.GITHUB_REPOSITORY) === null || _a === void 0 ? void 0 : _a.split("/")[0];
             console.log(`org: ${organization}`);
-            const team_obj = yield octokit.rest.teams.list(Object.assign(Object.assign({}, context.repo), { org: 's737testOrg' }));
+            const team_obj = yield octokit.rest.teams.list(Object.assign(Object.assign({}, context.repo), { org: organization }));
             for (const team of team_obj.data) {
                 console.log(`team list: ${team.slug}`);
             }
-            const team_list_obj = yield octokit.rest.teams.listMembersInOrg(Object.assign(Object.assign({}, context.repo), { org: 's737testOrg', team_slug: 's737team' }));
+            const team_list_obj = yield octokit.rest.teams.listMembersInOrg(Object.assign(Object.assign({}, context.repo), { org: organization, team_slug: 's737team' }));
             for (const member of team_list_obj.data) {
                 console.log(`team_list_obj: ${member.login}`);
             }

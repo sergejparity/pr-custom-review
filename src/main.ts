@@ -60,6 +60,7 @@ async function run(): Promise<void> {
     const custom_review_required = process.env.CUSTOM_REVIEW_REQUIRED
     const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`
     const workflow_name = `${process.env.GITHUB_WORKFLOW}`
+    const organization: string = process.env.GITHUB_REPOSITORY?.split("/")[0]!
 
     // No breaking changes - no cry. Set status OK and exit.
     if ( custom_review_required == 'not_required' ) {
@@ -99,12 +100,12 @@ async function run(): Promise<void> {
     console.log(`teams set: ${reviewer_teams_set}`)
 
     // console.log(octokit.rest.teams.listForAuthenticatedUser())
-    const organization = process.env.GITHUB_REPOSITORY?.split("/")[0]
+    
     console.log(`org: ${organization}`)
 
     const team_obj = await octokit.rest.teams.list({
       ...context.repo,
-      org: 's737testOrg'
+      org: organization
     });
 
     for(const team of team_obj.data){
@@ -113,7 +114,7 @@ async function run(): Promise<void> {
 
     const team_list_obj = await octokit.rest.teams.listMembersInOrg({
       ...context.repo,
-      org: 's737testOrg',
+      org: organization,
       team_slug: 's737team'
     });
 
