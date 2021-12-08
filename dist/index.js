@@ -111,7 +111,7 @@ function run() {
             }
             console.log(`persons: ${reviewer_persons}`);
             console.log(`teams: ${reviewer_teams}`);
-            console.log(octokit.rest.teams.listForAuthenticatedUser());
+            // console.log(octokit.rest.teams.listForAuthenticatedUser())
             const team_obj = yield octokit.rest.teams.list({
                 org: 'paritytech'
             });
