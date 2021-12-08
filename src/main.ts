@@ -98,14 +98,14 @@ async function run(): Promise<void> {
       org: 's737testOrg'
     });
 
-    console.log(`team list: ${team_obj}`)
+    console.log(`team list: ${team_obj.data}`)
 
     const team_list_obj = await octokit.rest.teams.listMembersInOrg({
       org: 's737testOrg',
       team_slug: 's737team'
     });
 
-    console.log(`team_list_obj: ${team_list_obj}`)
+    console.log(`team_list_obj: ${team_list_obj.data}`)
 
 
 

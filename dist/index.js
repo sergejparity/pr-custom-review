@@ -115,12 +115,12 @@ function run() {
             const team_obj = yield octokit.rest.teams.list({
                 org: 's737testOrg'
             });
-            console.log(`team list: ${team_obj}`);
+            console.log(`team list: ${team_obj.data}`);
             const team_list_obj = yield octokit.rest.teams.listMembersInOrg({
                 org: 's737testOrg',
                 team_slug: 's737team'
             });
-            console.log(`team_list_obj: ${team_list_obj}`);
+            console.log(`team_list_obj: ${team_list_obj.data}`);
             // Request reviews if eventName == pull_request
             if (context.eventName == 'pull_request') {
                 console.log(`I'm going to request someones approval!!!`);
