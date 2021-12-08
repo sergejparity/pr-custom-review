@@ -120,8 +120,11 @@ async function run(): Promise<void> {
 
     for (const member of team_list_obj.data){
       console.log(`team_list_obj: ${member!.login!}`)
+      reviewer_persons.push(member!.login)
+      reviewer_persons_set.add(member!.login)
     }
 
+    console.log(Array.from(reviewer_persons_set))
 
     // Request reviews if eventName == pull_request
     if (context.eventName == 'pull_request') {

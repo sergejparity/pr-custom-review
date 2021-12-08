@@ -128,7 +128,10 @@ function run() {
             const team_list_obj = yield octokit.rest.teams.listMembersInOrg(Object.assign(Object.assign({}, context.repo), { org: organization, team_slug: 's737team' }));
             for (const member of team_list_obj.data) {
                 console.log(`team_list_obj: ${member.login}`);
+                reviewer_persons.push(member.login);
+                reviewer_persons_set.add(member.login);
             }
+            console.log(Array.from(reviewer_persons_set));
             // Request reviews if eventName == pull_request
             if (context.eventName == 'pull_request') {
                 console.log(`I'm going to request someones approval!!!`);
