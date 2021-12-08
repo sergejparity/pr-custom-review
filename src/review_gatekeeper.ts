@@ -5,7 +5,8 @@ export interface Settings {
       minimum?: number
       name: string
       from: {
-        person?: string[]
+        persons?: string[]
+        teams?: string[]
       }
     }[]
   }
@@ -54,7 +55,8 @@ export class ReviewGatekeeper {
     const approved = new Set(approved_users)
     if (approvals.groups) {
       for (const group of approvals.groups) {
-        const required_users = new Set(group.from.person)
+        const required_users = new Set(group.from.persons)
+        const required_teams = new Set(group.from.teams)
         // Remove PR owner from required uesrs because PR owner cannot approve their own PR.
         required_users.delete(pr_owner)
         const approved_from_this_group = set_intersect(required_users, approved)

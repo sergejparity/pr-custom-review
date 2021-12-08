@@ -42,7 +42,7 @@ const fs = __importStar(__nccwpck_require__(5747));
 const YAML = __importStar(__nccwpck_require__(3552));
 const os_1 = __nccwpck_require__(2087);
 const review_gatekeeper_1 = __nccwpck_require__(302);
-function assignReviewers(client, reviewer_persons, pr_number) {
+function assignReviewers(client, reviewer_persons, reviewer_teams, pr_number) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             console.log(`entering assignReviewers`);
@@ -53,7 +53,16 @@ function assignReviewers(client, reviewer_persons, pr_number) {
                     pull_number: pr_number,
                     reviewers: reviewer_persons[0],
                 });
-                core.info(`Requested review from: ${reviewer_persons}.`);
+                core.info(`Requested review from users: ${reviewer_persons}.`);
+            }
+            if (reviewer_teams.length) {
+                yield client.rest.pulls.requestReviewers({
+                    owner: github.context.repo.owner,
+                    repo: github.context.repo.repo,
+                    pull_number: pr_number,
+                    team_reviewers: reviewer_teams[0],
+                });
+                core.info(`Requested review from teams: ${reviewer_teams}.`);
             }
             console.log(`exiting assignReviewers`);
         }
@@ -92,13 +101,15 @@ function run() {
             // Parse contents of config file into variable
             const config_file_contents = YAML.parse(config_file);
             const reviewer_persons = [];
+            const reviewer_teams = [];
             for (const reviewers of config_file_contents.approvals.groups) {
-                reviewer_persons.push(reviewers.from.person);
+                reviewer_persons.push(reviewers.from.persons);
+                reviewer_teams.push(reviewers.from.teams);
             }
             // Request reviews if eventName == pull_request
             if (context.eventName == 'pull_request') {
                 console.log(`I'm going to request someones approval!!!`);
-                assignReviewers(octokit, reviewer_persons, pr_number);
+                assignReviewers(octokit, reviewer_persons, reviewer_teams, pr_number);
                 octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'failure', context: workflow_name, target_url: workflow_url, description: `PR contains changes subject to special review. Review requested from: ${reviewer_persons.join(', ')}` }));
             }
             else {
@@ -179,7 +190,8 @@ class ReviewGatekeeper {
         const approved = new Set(approved_users);
         if (approvals.groups) {
             for (const group of approvals.groups) {
-                const required_users = new Set(group.from.person);
+                const required_users = new Set(group.from.persons);
+                const required_teams = new Set(group.from.teams);
                 // Remove PR owner from required uesrs because PR owner cannot approve their own PR.
                 required_users.delete(pr_owner);
                 const approved_from_this_group = set_intersect(required_users, approved);

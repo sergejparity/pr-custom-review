@@ -6,7 +6,7 @@ import * as YAML from 'yaml'
 import { EOL } from 'os'
 import { Settings, ReviewGatekeeper } from './review_gatekeeper'
 
-export async function assignReviewers(client: any, reviewer_persons: string[], pr_number: number) {
+export async function assignReviewers(client: any, reviewer_persons: string[], reviewer_teams: string[], pr_number: number) {
   try {
     console.log(`entering assignReviewers`)
     if (reviewer_persons.length) {
@@ -16,7 +16,16 @@ export async function assignReviewers(client: any, reviewer_persons: string[], p
         pull_number: pr_number,
         reviewers: reviewer_persons[0],
       });
-      core.info(`Requested review from: ${reviewer_persons}.`);
+      core.info(`Requested review from users: ${reviewer_persons}.`);
+    }
+    if (reviewer_teams.length) {
+      await client.rest.pulls.requestReviewers({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        pull_number: pr_number,
+        team_reviewers:reviewer_teams[0],
+      });
+      core.info(`Requested review from teams: ${reviewer_teams}.`);
     }
     console.log(`exiting assignReviewers`)
   } catch (error) {
@@ -71,14 +80,16 @@ async function run(): Promise<void> {
     const config_file_contents = YAML.parse(config_file)
 
     const reviewer_persons: string[] = []
+    const reviewer_teams: string[] = []
     for (const reviewers of config_file_contents.approvals.groups) {
-      reviewer_persons.push(reviewers.from.person)
+      reviewer_persons.push(reviewers.from.persons)
+      reviewer_teams.push(reviewers.from.teams)
     }
 
     // Request reviews if eventName == pull_request
     if (context.eventName == 'pull_request') {
       console.log(`I'm going to request someones approval!!!`)
-      assignReviewers(octokit, reviewer_persons, pr_number)
+      assignReviewers(octokit, reviewer_persons, reviewer_teams, pr_number)
 
       octokit.rest.repos.createCommitStatus({
         ...context.repo,
