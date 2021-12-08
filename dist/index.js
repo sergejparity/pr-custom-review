@@ -112,10 +112,10 @@ function run() {
             console.log(`persons: ${reviewer_persons}`);
             console.log(`teams: ${reviewer_teams}`);
             // console.log(octokit.rest.teams.listForAuthenticatedUser())
-            const team_obj = yield octokit.rest.teams.list({
-                org: 's737testOrg'
-            });
-            console.log(`team list: ${team_obj.data}`);
+            const team_obj = yield octokit.rest.teams.list(Object.assign(Object.assign({}, context.repo), { org: 's737testOrg' }));
+            for (const team of team_obj.data) {
+                console.log(`team list: ${team.slug}`);
+            }
             const team_list_obj = yield octokit.rest.teams.listMembersInOrg(Object.assign(Object.assign({}, context.repo), { org: 's737testOrg', team_slug: 's737team' }));
             for (const member of team_list_obj.data) {
                 console.log(`team_list_obj: ${member.login}`);
@@ -131,7 +131,6 @@ function run() {
                 //retrieve approvals
                 const reviews = yield octokit.rest.pulls.listReviews(Object.assign(Object.assign({}, context.repo), { pull_number: payload.pull_request.number }));
                 const approved_users = new Set();
-                console.log(`reviews: ${reviews.data}`);
                 for (const review of reviews.data) {
                     if (review.state === `APPROVED`) {
                         approved_users.add(review.user.login);

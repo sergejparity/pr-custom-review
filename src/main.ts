@@ -95,10 +95,13 @@ async function run(): Promise<void> {
     // console.log(octokit.rest.teams.listForAuthenticatedUser())
 
     const team_obj = await octokit.rest.teams.list({
+      ...context.repo,
       org: 's737testOrg'
     });
 
-    console.log(`team list: ${team_obj.data}`)
+    for(const team of team_obj.data){
+      console.log(`team list: ${team.slug}`)
+    }
 
     const team_list_obj = await octokit.rest.teams.listMembersInOrg({
       ...context.repo,
@@ -109,8 +112,6 @@ async function run(): Promise<void> {
     for (const member of team_list_obj.data){
       console.log(`team_list_obj: ${member!.login!}`)
     }
-    
-
 
 
     // Request reviews if eventName == pull_request
@@ -136,7 +137,6 @@ async function run(): Promise<void> {
         pull_number: payload.pull_request.number
       })
       const approved_users: Set<string> = new Set()
-      console.log(`reviews: ${reviews.data}`)
       for (const review of reviews.data) {
         if (review.state === `APPROVED`) {
           approved_users.add(review.user!.login)
