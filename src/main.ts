@@ -105,7 +105,7 @@ async function run(): Promise<void> {
       team_slug: 's737team'
     });
 
-    console.log(`team_list_obj: ${team_list_obj.data}`)
+    console.log(`team_list_obj: ${team_list_obj.headers}`)
 
 
 

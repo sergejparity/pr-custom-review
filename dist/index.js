@@ -120,7 +120,7 @@ function run() {
                 org: 's737testOrg',
                 team_slug: 's737team'
             });
-            console.log(`team_list_obj: ${team_list_obj.data}`);
+            console.log(`team_list_obj: ${team_list_obj.headers}`);
             // Request reviews if eventName == pull_request
             if (context.eventName == 'pull_request') {
                 console.log(`I'm going to request someones approval!!!`);
