@@ -95,13 +95,13 @@ async function run(): Promise<void> {
     // console.log(octokit.rest.teams.listForAuthenticatedUser())
 
     const team_obj = await octokit.rest.teams.list({
-      org: 'paritytech'
+      org: 's737testOrg'
     });
 
     console.log(`team list: ${team_obj}`)
 
     const team_list_obj = await octokit.rest.teams.listMembersInOrg({
-      org: 'paritytech',
+      org: 's737testOrg',
       team_slug: 's737team'
     });
 

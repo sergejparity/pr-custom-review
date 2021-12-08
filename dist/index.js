@@ -113,11 +113,11 @@ function run() {
             console.log(`teams: ${reviewer_teams}`);
             // console.log(octokit.rest.teams.listForAuthenticatedUser())
             const team_obj = yield octokit.rest.teams.list({
-                org: 'paritytech'
+                org: 's737testOrg'
             });
             console.log(`team list: ${team_obj}`);
             const team_list_obj = yield octokit.rest.teams.listMembersInOrg({
-                org: 'paritytech',
+                org: 's737testOrg',
                 team_slug: 's737team'
             });
             console.log(`team_list_obj: ${team_list_obj}`);
