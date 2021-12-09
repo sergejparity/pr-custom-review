@@ -106,58 +106,47 @@ function run() {
             const config_file = fs.readFileSync(core.getInput('config-file'), 'utf8');
             // Parse contents of config file into variable
             const config_file_contents = YAML.parse(config_file);
-            // const reviewer_persons: string[] = []
-            // const reviewer_teams: string[] = []
             const reviewer_persons_set = new Set();
             const reviewer_teams_set = new Set();
             for (const reviewers of config_file_contents.approvals.groups) {
                 if (reviewers.from.persons) {
                     for (var entry of reviewers.from.persons) {
                         if (entry != pr_owner) {
-                            // reviewer_persons.push(entry)
                             reviewer_persons_set.add(entry);
                         }
                     }
                 }
                 if (reviewers.from.teams) {
                     for (var entry of reviewers.from.teams) {
-                        // reviewer_teams.push(entry)
                         reviewer_teams_set.add(entry);
                     }
                 }
             }
-            // console.log(`persons: `)
-            // console.log(reviewer_persons)
-            // console.log(`teams: `)
-            // console.log(reviewer_teams)
             console.log(`persons set:`);
             console.log(reviewer_persons_set);
             console.log(`teams set:`);
             console.log(reviewer_teams_set);
-            // console.log(octokit.rest.teams.listForAuthenticatedUser())
-            console.log(`org: ${organization}`);
-            const team_obj = yield octokit.rest.teams.list(Object.assign(Object.assign({}, context.repo), { org: organization }));
-            for (const team of team_obj.data) {
-                console.log(`team list: ${team.slug}`);
-            }
-            const team_list_obj = yield octokit.rest.teams.listMembersInOrg(Object.assign(Object.assign({}, context.repo), { org: organization, team_slug: 's737team' }));
-            for (const member of team_list_obj.data) {
-                if (pr_owner != member.login) {
-                    console.log(`team_member: ${member.login}`); //debug output
-                    // reviewer_persons.push(member!.login)
-                    reviewer_persons_set.add(member.login);
-                }
-            }
-            // console.log(reviewer_persons)  //debug output
             console.log(Array.from(reviewer_persons_set)); //debug output
-            // Request reviews if eventName == pull_request
             if (context.eventName == 'pull_request') {
                 console.log(`I'm going to request someones approval!!!`);
                 assignReviewers(octokit, Array.from(reviewer_persons_set), Array.from(reviewer_teams_set), pr_number);
                 octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'failure', context: workflow_name, target_url: workflow_url, description: `PR contains changes subject to special review. Review requested from: ${Array.from(reviewer_persons_set)}` }));
             }
             else {
-                console.log(`I don't care about requesting approvals! We'll just check who already approved`);
+                console.log(`I don't care about requesting approvals! Will just check who already approved`);
+                // aggregate reviewers from persons and teams
+                console.log(`org: ${organization}`);
+                const teams_list = yield octokit.rest.teams.list(Object.assign(Object.assign({}, context.repo), { org: organization }));
+                for (const team of teams_list.data) {
+                    console.log(`team list: ${team.slug}`);
+                }
+                const team_list_obj = yield octokit.rest.teams.listMembersInOrg(Object.assign(Object.assign({}, context.repo), { org: organization, team_slug: 's737team' }));
+                for (const member of team_list_obj.data) {
+                    if (pr_owner != member.login) {
+                        console.log(`team_member: ${member.login}`); //debug output
+                        reviewer_persons_set.add(member.login);
+                    }
+                }
                 //retrieve approvals
                 const reviews = yield octokit.rest.pulls.listReviews(Object.assign(Object.assign({}, context.repo), { pull_number: payload.pull_request.number }));
                 const approved_users = new Set();
@@ -172,7 +161,7 @@ function run() {
                     }
                 }
                 // check approvals
-                const review_gatekeeper = new review_gatekeeper_1.ReviewGatekeeper(config_file_contents, Array.from(approved_users), payload.pull_request.user.login);
+                const review_gatekeeper = new review_gatekeeper_1.ReviewGatekeeper(config_file_contents, Array.from(approved_users), reviewer_persons_set, payload.pull_request.user.login);
                 // The workflow url can be obtained by combining several environment varialbes, as described below:
                 // https://docs.github.com/en/actions/reference/environment-variables#default-environment-variables
                 core.info(`Setting a status on commit (${sha})`);
@@ -221,7 +210,7 @@ function set_to_string(as) {
     return [...as].join(', ');
 }
 class ReviewGatekeeper {
-    constructor(settings, approved_users, pr_owner) {
+    constructor(settings, approved_users, requested_reviewers, pr_owner) {
         this.messages = [];
         this.meet_criteria = true;
         const approvals = settings.approvals;
@@ -236,8 +225,9 @@ class ReviewGatekeeper {
         const approved = new Set(approved_users);
         if (approvals.groups) {
             for (const group of approvals.groups) {
-                const required_users = new Set(group.from.persons);
-                const required_teams = new Set(group.from.teams);
+                const required_users = requested_reviewers;
+                // const required_users = new Set(group.from.persons)
+                // const required_teams = new Set(group.from.teams)
                 // Remove PR owner from required uesrs because PR owner cannot approve their own PR.
                 required_users.delete(pr_owner);
                 const approved_from_this_group = set_intersect(required_users, approved);

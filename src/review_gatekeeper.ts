@@ -36,7 +36,7 @@ export class ReviewGatekeeper {
   private messages: string[]
   private meet_criteria: boolean
 
-  constructor(settings: Settings, approved_users: string[], pr_owner: string) {
+  constructor(settings: Settings, approved_users: string[], requested_reviewers: Set<string>, pr_owner: string) {
     this.messages = []
     this.meet_criteria = true
 
@@ -55,8 +55,9 @@ export class ReviewGatekeeper {
     const approved = new Set(approved_users)
     if (approvals.groups) {
       for (const group of approvals.groups) {
-        const required_users = new Set(group.from.persons)
-        const required_teams = new Set(group.from.teams)
+        const required_users = requested_reviewers
+        // const required_users = new Set(group.from.persons)
+        // const required_teams = new Set(group.from.teams)
         // Remove PR owner from required uesrs because PR owner cannot approve their own PR.
         required_users.delete(pr_owner)
         const approved_from_this_group = set_intersect(required_users, approved)

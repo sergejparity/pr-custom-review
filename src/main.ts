@@ -84,8 +84,6 @@ async function run(): Promise<void> {
     // Parse contents of config file into variable
     const config_file_contents = YAML.parse(config_file)
 
-    // const reviewer_persons: string[] = []
-    // const reviewer_teams: string[] = []
     const reviewer_persons_set: Set<string> = new Set()
     const reviewer_teams_set: Set<string> = new Set()
 
@@ -93,56 +91,24 @@ async function run(): Promise<void> {
       if (reviewers.from.persons) {
         for (var entry of reviewers.from.persons) {
           if (entry != pr_owner) {
-            // reviewer_persons.push(entry)
             reviewer_persons_set.add(entry)
           }
         }
       }
       if (reviewers.from.teams) {
         for (var entry of reviewers.from.teams) {
-          // reviewer_teams.push(entry)
           reviewer_teams_set.add(entry)
         }
       }
     }
 
-    // console.log(`persons: `)
-    // console.log(reviewer_persons)
-    // console.log(`teams: `)
-    // console.log(reviewer_teams)
     console.log(`persons set:`)
     console.log(reviewer_persons_set)
     console.log(`teams set:`)
     console.log(reviewer_teams_set)
 
-    // console.log(octokit.rest.teams.listForAuthenticatedUser())
-    console.log(`org: ${organization}`)
-
-    const team_obj = await octokit.rest.teams.list({
-      ...context.repo,
-      org: organization
-    });
-
-    for (const team of team_obj.data) { console.log(`team list: ${team.slug}`) }
-
-    const team_list_obj = await octokit.rest.teams.listMembersInOrg({
-      ...context.repo,
-      org: organization,
-      team_slug: 's737team'
-    });
-
-    for (const member of team_list_obj.data) {
-      if (pr_owner != member!.login) {
-        console.log(`team_member: ${member!.login!}`) //debug output
-        // reviewer_persons.push(member!.login)
-        reviewer_persons_set.add(member!.login)
-      }
-    }
-
-    // console.log(reviewer_persons)  //debug output
     console.log(Array.from(reviewer_persons_set)) //debug output
 
-    // Request reviews if eventName == pull_request
     if (context.eventName == 'pull_request') {
       console.log(`I'm going to request someones approval!!!`)
       assignReviewers(octokit, Array.from(reviewer_persons_set), Array.from(reviewer_teams_set), pr_number)
@@ -157,7 +123,31 @@ async function run(): Promise<void> {
       })
 
     } else {
-      console.log(`I don't care about requesting approvals! We'll just check who already approved`)
+      console.log(`I don't care about requesting approvals! Will just check who already approved`)
+
+      // aggregate reviewers from persons and teams
+      console.log(`org: ${organization}`)
+
+      const teams_list = await octokit.rest.teams.list({
+        ...context.repo,
+        org: organization
+      });
+
+      for (const team of teams_list.data) { 
+        console.log(`team list: ${team.slug}`) }
+
+      const team_list_obj = await octokit.rest.teams.listMembersInOrg({
+        ...context.repo,
+        org: organization,
+        team_slug: 's737team'
+      });
+
+      for (const member of team_list_obj.data) {
+        if (pr_owner != member!.login) {
+          console.log(`team_member: ${member!.login!}`) //debug output
+          reviewer_persons_set.add(member!.login)
+        }
+      }
 
       //retrieve approvals
       const reviews = await octokit.rest.pulls.listReviews({
@@ -179,6 +169,7 @@ async function run(): Promise<void> {
       const review_gatekeeper = new ReviewGatekeeper(
         config_file_contents as Settings,
         Array.from(approved_users),
+        reviewer_persons_set,
         payload.pull_request.user.login
       )
 
