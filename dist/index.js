@@ -124,10 +124,12 @@ function run() {
             }
             console.log(`persons: `);
             console.log(reviewer_persons);
-            console.log(`teams: ${reviewer_teams}`);
+            console.log(`teams: `);
+            console.log(reviewer_teams);
             console.log(`persons set:`);
             console.log(reviewer_persons_set);
-            console.log(`teams set: ${reviewer_teams_set}`);
+            console.log(`teams set:`);
+            console.log(reviewer_teams_set);
             // console.log(octokit.rest.teams.listForAuthenticatedUser())
             console.log(`org: ${organization}`);
             const team_obj = yield octokit.rest.teams.list(Object.assign(Object.assign({}, context.repo), { org: organization }));
