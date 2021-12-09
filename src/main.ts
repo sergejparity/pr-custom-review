@@ -109,7 +109,6 @@ async function run(): Promise<void> {
     console.log(`teams set: ${reviewer_teams_set}`)
 
     // console.log(octokit.rest.teams.listForAuthenticatedUser())
-    
     console.log(`org: ${organization}`)
 
     const team_obj = await octokit.rest.teams.list({
@@ -162,8 +161,10 @@ async function run(): Promise<void> {
       for (const review of reviews.data) {
         if (review.state === `APPROVED`) {
           approved_users.add(review.user!.login)
+          console.log(`Approved: ${review.user!.login} --- ${review.state}`)
         } else {
           approved_users.delete(review.user!.login)
+          console.log(`Other state: ${review.user!.login} --- ${review.state}`)
         }
       }
 
