@@ -92,6 +92,13 @@ async function run(): Promise<void> {
     console.log(reviewer_persons_set)
     for (const reviewers of config_file_contents.approvals.groups) {
       if(reviewers.from.persons){
+        for (var persona of reviewers.from.persons){
+          console.log(`persona:`)
+          console.log(persona)
+        }
+        // reviewers.from.persons.forEach(element (value) => {
+        //   console.log(value)
+        // } );
         reviewer_persons.push(reviewers.from.persons)
         reviewer_persons_set.add(reviewers.from?.persons)
       }
