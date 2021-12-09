@@ -58,13 +58,12 @@ async function run(): Promise<void> {
     const pr_number = payload.pull_request.number
     const pr_owner = payload.pull_request.user.login
     const sha = payload.pull_request.head.sha
-    const custom_review_required = process.env.CUSTOM_REVIEW_REQUIRED
     const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`
     const workflow_name = `${process.env.GITHUB_WORKFLOW}`
     const organization: string = process.env.GITHUB_REPOSITORY?.split("/")[0]!
 
     // No breaking changes - no cry. Set status OK and exit.
-    if (custom_review_required == 'not_required') {
+    if (process.env.CUSTOM_REVIEW_REQUIRED == 'not_required') {
       console.log(`Special approval of this PR is not required.`)
 
       octokit.rest.repos.createCommitStatus({
@@ -102,15 +101,14 @@ async function run(): Promise<void> {
       }
     }
 
-    console.log(`persons set:`)
-    console.log(reviewer_persons_set)
-    console.log(`teams set:`)
-    console.log(reviewer_teams_set)
-
-    console.log(Array.from(reviewer_persons_set)) //debug output
+    console.log(`persons set:`) //DEBUG
+    console.log(reviewer_persons_set) //DEBUG
+    console.log(`teams set:`) //DEBUG
+    console.log(reviewer_teams_set) //DEBUG
+    console.log(Array.from(reviewer_persons_set))  //DEBUG
 
     if (context.eventName == 'pull_request') {
-      console.log(`I'm going to request someones approval!!!`)
+      console.log(`I'm going to request someones approval!!!`) //DEBUG
       assignReviewers(octokit, Array.from(reviewer_persons_set), Array.from(reviewer_teams_set), pr_number)
 
       octokit.rest.repos.createCommitStatus({
@@ -133,19 +131,20 @@ async function run(): Promise<void> {
         org: organization
       });
 
-      for (const team of teams_list.data) { 
-        console.log(`team list: ${team.slug}`) }
+      for (const team of teams_list.data) {
+        console.log(`team list: ${team.slug}`)
 
-      const team_list_obj = await octokit.rest.teams.listMembersInOrg({
-        ...context.repo,
-        org: organization,
-        team_slug: 's737team'
-      });
+        const team_list_obj = await octokit.rest.teams.listMembersInOrg({
+          ...context.repo,
+          org: organization,
+          team_slug: team.slug
+        });
 
-      for (const member of team_list_obj.data) {
-        if (pr_owner != member!.login) {
-          console.log(`team_member: ${member!.login!}`) //debug output
-          reviewer_persons_set.add(member!.login)
+        for (const member of team_list_obj.data) {
+          if (pr_owner != member!.login) {
+            console.log(`team_member: ${member!.login!}`) //debug output
+            reviewer_persons_set.add(member!.login)
+          }
         }
       }
 
