@@ -87,6 +87,9 @@ async function run(): Promise<void> {
     const reviewer_teams: string[] = []
     const reviewer_persons_set: Set<string> = new Set()
     const reviewer_teams_set: Set<string> = new Set()
+    console.log('before addition')
+    console.log(reviewer_persons)
+    console.log(reviewer_persons_set)
     for (const reviewers of config_file_contents.approvals.groups) {
       reviewer_persons.push(reviewers.from.persons)
       reviewer_persons_set.add(reviewers.from.persons)
@@ -94,9 +97,11 @@ async function run(): Promise<void> {
       reviewer_teams_set.add(reviewers.from.teams)
     }
 
-    console.log(`persons: ${reviewer_persons}`)
+    console.log(`persons: `)
+    console.log(reviewer_persons)
     console.log(`teams: ${reviewer_teams}`)
-    console.log(`persons set: ${reviewer_persons_set}`)
+    console.log(`persons set:`)
+    console.log(reviewer_persons_set)
     console.log(`teams set: ${reviewer_teams_set}`)
 
     // console.log(octokit.rest.teams.listForAuthenticatedUser())
