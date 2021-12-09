@@ -46,26 +46,26 @@ function assignReviewers(client, reviewer_persons, reviewer_teams, pr_number) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             console.log(`entering assignReviewers`);
-            console.log(`persons length: ${reviewer_persons.length} - ${reviewer_persons[0]}`);
-            if (reviewer_persons[0]) {
+            console.log(`persons length: ${reviewer_persons.length} - ${reviewer_persons}`);
+            if (reviewer_persons) {
                 yield client.rest.pulls.requestReviewers({
                     owner: github.context.repo.owner,
                     repo: github.context.repo.repo,
                     pull_number: pr_number,
-                    reviewers: reviewer_persons[0],
+                    reviewers: reviewer_persons,
                 });
-                core.info(`Requested review from users: ${reviewer_persons[0]}.`);
+                core.info(`Requested review from users: ${reviewer_persons}.`);
             }
             console.log(`passed by persons trying teams`);
-            console.log(`teams length: ${reviewer_teams[0]}`);
-            if (reviewer_teams[0]) {
+            console.log(`teams length: ${reviewer_teams}`);
+            if (reviewer_teams) {
                 yield client.rest.pulls.requestReviewers({
                     owner: github.context.repo.owner,
                     repo: github.context.repo.repo,
                     pull_number: pr_number,
-                    team_reviewers: reviewer_teams[0],
+                    team_reviewers: reviewer_teams,
                 });
-                core.info(`Requested review from teams: ${reviewer_teams[0]}.`);
+                core.info(`Requested review from teams: ${reviewer_teams}.`);
             }
             console.log(`exiting assignReviewers`);
         }
