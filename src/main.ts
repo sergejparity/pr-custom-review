@@ -91,7 +91,11 @@ async function run(): Promise<void> {
     console.log(reviewer_persons)
     console.log(reviewer_persons_set)
     for (const reviewers of config_file_contents.approvals.groups) {
-      reviewer_persons.push(reviewers.from?.persons)
+      if(reviewers.from.persons){
+        console.log("we passed in null!!!")
+        reviewer_persons.push(reviewers.from?.persons)
+      }
+      
       reviewer_persons_set.add(reviewers.from?.persons)
       reviewer_teams.push(reviewers.from.teams)
       reviewer_teams_set.add(reviewers.from.teams)

@@ -113,7 +113,10 @@ function run() {
             console.log(reviewer_persons);
             console.log(reviewer_persons_set);
             for (const reviewers of config_file_contents.approvals.groups) {
-                reviewer_persons.push((_b = reviewers.from) === null || _b === void 0 ? void 0 : _b.persons);
+                if (reviewers.from.persons) {
+                    console.log("we passed in null!!!");
+                    reviewer_persons.push((_b = reviewers.from) === null || _b === void 0 ? void 0 : _b.persons);
+                }
                 reviewer_persons_set.add((_c = reviewers.from) === null || _c === void 0 ? void 0 : _c.persons);
                 reviewer_teams.push(reviewers.from.teams);
                 reviewer_teams_set.add(reviewers.from.teams);
