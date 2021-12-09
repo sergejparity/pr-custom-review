@@ -90,6 +90,7 @@ function run() {
             const token = core.getInput('token');
             const octokit = github.getOctokit(token);
             const pr_number = payload.pull_request.number;
+            const pr_owner = payload.pull_request.user.login;
             const sha = payload.pull_request.head.sha;
             const custom_review_required = process.env.CUSTOM_REVIEW_REQUIRED;
             const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`;
@@ -115,10 +116,10 @@ function run() {
             for (const reviewers of config_file_contents.approvals.groups) {
                 if (reviewers.from.persons) {
                     for (var entry of reviewers.from.persons) {
-                        console.log(`entry:`);
-                        console.log(entry);
-                        reviewer_persons.push(entry);
-                        reviewer_persons_set.add(entry);
+                        if (entry != pr_owner) {
+                            reviewer_persons.push(entry);
+                            reviewer_persons_set.add(entry);
+                        }
                     }
                 }
                 if (reviewers.from.teams) {
@@ -144,9 +145,11 @@ function run() {
             }
             const team_list_obj = yield octokit.rest.teams.listMembersInOrg(Object.assign(Object.assign({}, context.repo), { org: organization, team_slug: 's737team' }));
             for (const member of team_list_obj.data) {
-                console.log(`team_list_obj: ${member.login}`);
-                reviewer_persons.push(member.login);
-                reviewer_persons_set.add(member.login);
+                if (pr_owner != member.login) {
+                    console.log(`team_list_obj: ${member.login}`);
+                    reviewer_persons.push(member.login);
+                    reviewer_persons_set.add(member.login);
+                }
             }
             console.log(reviewer_persons);
             console.log(Array.from(reviewer_persons_set));
