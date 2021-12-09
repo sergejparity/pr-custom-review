@@ -45,8 +45,8 @@ const review_gatekeeper_1 = __nccwpck_require__(302);
 function assignReviewers(client, reviewer_persons, reviewer_teams, pr_number) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            console.log(`entering assignReviewers`);
-            console.log(`persons length: ${reviewer_persons.length} - ${reviewer_persons}`);
+            console.log(`entering assignReviewers`); //DEBUG
+            console.log(`persons length: ${reviewer_persons.length} - ${reviewer_persons}`); //DEBUG
             if (reviewer_persons) {
                 yield client.rest.pulls.requestReviewers({
                     owner: github.context.repo.owner,
@@ -56,8 +56,8 @@ function assignReviewers(client, reviewer_persons, reviewer_teams, pr_number) {
                 });
                 core.info(`Requested review from users: ${reviewer_persons}.`);
             }
-            console.log(`passed by persons trying teams`);
-            console.log(`teams length: ${reviewer_teams}`);
+            console.log(`passed by persons trying teams`); //DEBUG
+            console.log(`teams length: ${reviewer_teams}`); //DEBUG
             if (reviewer_teams) {
                 yield client.rest.pulls.requestReviewers({
                     owner: github.context.repo.owner,
@@ -67,7 +67,7 @@ function assignReviewers(client, reviewer_persons, reviewer_teams, pr_number) {
                 });
                 core.info(`Requested review from teams: ${reviewer_teams}.`);
             }
-            console.log(`exiting assignReviewers`);
+            console.log(`exiting assignReviewers`); //DEBUG
         }
         catch (error) {
             core.setFailed(error.message);
@@ -106,33 +106,30 @@ function run() {
             const config_file = fs.readFileSync(core.getInput('config-file'), 'utf8');
             // Parse contents of config file into variable
             const config_file_contents = YAML.parse(config_file);
-            const reviewer_persons = [];
-            const reviewer_teams = [];
+            // const reviewer_persons: string[] = []
+            // const reviewer_teams: string[] = []
             const reviewer_persons_set = new Set();
             const reviewer_teams_set = new Set();
-            console.log('before addition');
-            console.log(reviewer_persons);
-            console.log(reviewer_persons_set);
             for (const reviewers of config_file_contents.approvals.groups) {
                 if (reviewers.from.persons) {
                     for (var entry of reviewers.from.persons) {
                         if (entry != pr_owner) {
-                            reviewer_persons.push(entry);
+                            // reviewer_persons.push(entry)
                             reviewer_persons_set.add(entry);
                         }
                     }
                 }
                 if (reviewers.from.teams) {
                     for (var entry of reviewers.from.teams) {
-                        reviewer_teams.push(entry);
+                        // reviewer_teams.push(entry)
                         reviewer_teams_set.add(entry);
                     }
                 }
             }
-            console.log(`persons: `);
-            console.log(reviewer_persons);
-            console.log(`teams: `);
-            console.log(reviewer_teams);
+            // console.log(`persons: `)
+            // console.log(reviewer_persons)
+            // console.log(`teams: `)
+            // console.log(reviewer_teams)
             console.log(`persons set:`);
             console.log(reviewer_persons_set);
             console.log(`teams set:`);
@@ -146,18 +143,18 @@ function run() {
             const team_list_obj = yield octokit.rest.teams.listMembersInOrg(Object.assign(Object.assign({}, context.repo), { org: organization, team_slug: 's737team' }));
             for (const member of team_list_obj.data) {
                 if (pr_owner != member.login) {
-                    console.log(`team_list_obj: ${member.login}`);
-                    reviewer_persons.push(member.login);
+                    console.log(`team_member: ${member.login}`); //debug output
+                    // reviewer_persons.push(member!.login)
                     reviewer_persons_set.add(member.login);
                 }
             }
-            console.log(reviewer_persons);
-            console.log(Array.from(reviewer_persons_set));
+            // console.log(reviewer_persons)  //debug output
+            console.log(Array.from(reviewer_persons_set)); //debug output
             // Request reviews if eventName == pull_request
             if (context.eventName == 'pull_request') {
                 console.log(`I'm going to request someones approval!!!`);
-                assignReviewers(octokit, reviewer_persons, reviewer_teams, pr_number);
-                octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'failure', context: workflow_name, target_url: workflow_url, description: `PR contains changes subject to special review. Review requested from: ${reviewer_persons.join(', ')}` }));
+                assignReviewers(octokit, Array.from(reviewer_persons_set), Array.from(reviewer_teams_set), pr_number);
+                octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'failure', context: workflow_name, target_url: workflow_url, description: `PR contains changes subject to special review. Review requested from: ${Array.from(reviewer_persons_set)}` }));
             }
             else {
                 console.log(`I don't care about requesting approvals! We'll just check who already approved`);
