@@ -26,7 +26,7 @@ export async function assignReviewers(client: any, reviewer_persons: string[], r
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
         pull_number: pr_number,
-        team_reviewers:reviewer_teams[0],
+        team_reviewers: reviewer_teams[0],
       });
       core.info(`Requested review from teams: ${reviewer_teams[0]}.`);
     }
@@ -63,7 +63,7 @@ async function run(): Promise<void> {
     const organization: string = process.env.GITHUB_REPOSITORY?.split("/")[0]!
 
     // No breaking changes - no cry. Set status OK and exit.
-    if ( custom_review_required == 'not_required' ) {
+    if (custom_review_required == 'not_required') {
       console.log(`Special approval of this PR is not required.`)
 
       octokit.rest.repos.createCommitStatus({
@@ -91,20 +91,19 @@ async function run(): Promise<void> {
     console.log(reviewer_persons)
     console.log(reviewer_persons_set)
     for (const reviewers of config_file_contents.approvals.groups) {
-      if(reviewers.from.persons){
-        for (var persona of reviewers.from.persons){
-          console.log(`persona:`)
-          console.log(persona)
+      if (reviewers.from.persons) {
+        for (var entry of reviewers.from.persons) {
+          console.log(`entry:`)
+          console.log(entry)
+          reviewer_persons.push(entry)
+          reviewer_persons_set.add(entry)
         }
-        // reviewers.from.persons.forEach(element (value) => {
-        //   console.log(value)
-        // } );
-        reviewer_persons.push(reviewers.from.persons)
-        reviewer_persons_set.add(reviewers.from?.persons)
       }
-      if(reviewers.from.teams){
-        reviewer_teams.push(reviewers.from.teams)
-        reviewer_teams_set.add(reviewers.from.teams)
+      if (reviewers.from.teams) {
+        for (var entry of reviewers.from.teams) {
+          reviewer_teams.push(entry)
+          reviewer_teams_set.add(entry)
+        }
       }
     }
 
@@ -125,7 +124,7 @@ async function run(): Promise<void> {
       org: organization
     });
 
-    for(const team of team_obj.data){
+    for (const team of team_obj.data) {
       console.log(`team list: ${team.slug}`)
     }
 
@@ -135,7 +134,7 @@ async function run(): Promise<void> {
       team_slug: 's737team'
     });
 
-    for (const member of team_list_obj.data){
+    for (const member of team_list_obj.data) {
       console.log(`team_list_obj: ${member!.login!}`)
       reviewer_persons.push(member!.login)
       reviewer_persons_set.add(member!.login)

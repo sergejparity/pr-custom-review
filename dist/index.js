@@ -77,7 +77,7 @@ function assignReviewers(client, reviewer_persons, reviewer_teams, pr_number) {
 }
 exports.assignReviewers = assignReviewers;
 function run() {
-    var _a, _b;
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const context = github.context;
@@ -114,19 +114,18 @@ function run() {
             console.log(reviewer_persons_set);
             for (const reviewers of config_file_contents.approvals.groups) {
                 if (reviewers.from.persons) {
-                    for (var persona of reviewers.from.persons) {
-                        console.log(`persona:`);
-                        console.log(persona);
+                    for (var entry of reviewers.from.persons) {
+                        console.log(`entry:`);
+                        console.log(entry);
+                        reviewer_persons.push(entry);
+                        reviewer_persons_set.add(entry);
                     }
-                    // reviewers.from.persons.forEach(element (value) => {
-                    //   console.log(value)
-                    // } );
-                    reviewer_persons.push(reviewers.from.persons);
-                    reviewer_persons_set.add((_b = reviewers.from) === null || _b === void 0 ? void 0 : _b.persons);
                 }
                 if (reviewers.from.teams) {
-                    reviewer_teams.push(reviewers.from.teams);
-                    reviewer_teams_set.add(reviewers.from.teams);
+                    for (var entry of reviewers.from.teams) {
+                        reviewer_teams.push(entry);
+                        reviewer_teams_set.add(entry);
+                    }
                 }
             }
             console.log(`persons: `);
