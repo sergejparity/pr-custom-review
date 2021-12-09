@@ -131,6 +131,7 @@ function run() {
                 reviewer_persons.push(member.login);
                 reviewer_persons_set.add(member.login);
             }
+            console.log(reviewer_persons);
             console.log(Array.from(reviewer_persons_set));
             // Request reviews if eventName == pull_request
             if (context.eventName == 'pull_request') {
