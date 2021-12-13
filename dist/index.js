@@ -115,7 +115,7 @@ function run() {
             // });
             const execSync = __nccwpck_require__(3129).execSync;
             // import { execSync } from 'child_process';  // replace ^ if using ES modules
-            const output = execSync('ls', { encoding: 'utf-8' }); // the default is 'buffer'
+            const output = execSync("git --no-pager diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -U1 | { grep 🔒 || true; }", { encoding: 'utf-8' }); // the default is 'buffer'
             console.log('Output was:\n', output);
             // No breaking changes - no cry. Set status OK and exit.
             if (process.env.CUSTOM_REVIEW_REQUIRED == 'not_required') {
