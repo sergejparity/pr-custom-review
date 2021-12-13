@@ -101,6 +101,7 @@ function run() {
             console.log(`pr_owner: ${pr_owner}`);
             console.log(`diff url: ${pr_diff}`);
             const diff_body = yield octokit.request(pr_diff);
+            console.log(typeof diff_body);
             console.log(diff_body.data);
             // experiment with shell exec
             // const { exec } = require("child_process");
@@ -115,6 +116,10 @@ function run() {
             //   }
             //   console.log(`stdout: ${stdout}`);
             // });
+            // const execSync = require('child_process').execSync;
+            // // import { execSync } from 'child_process';  // replace ^ if using ES modules
+            // const output = execSync("git --no-pager diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -U1 | grep 🔒 ", { encoding: 'utf-8' });  // the default is 'buffer'
+            // console.log('Output was:\n', output);
             // No breaking changes - no cry. Set status OK and exit.
             if (process.env.CUSTOM_REVIEW_REQUIRED == 'not_required') {
                 console.log(`Special approval of this PR is not required.`);
@@ -150,15 +155,15 @@ function run() {
                 console.log(`I'm going to request someones approval!!!`); //DEBUG
                 assignReviewers(octokit, Array.from(reviewer_persons_set), Array.from(reviewer_teams_set), pr_number);
                 octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'failure', context: workflow_name, target_url: workflow_url, description: `PR contains changes subject to special review. Review requested from: ${Array.from(reviewer_persons_set)}` }));
-                const { data: prDiff } = yield octokit.rest.pulls.get({
-                    owner: pr_owner,
-                    repo: repo,
-                    pull_number: pr_number,
-                    mediaType: {
-                        format: "diff"
-                    }
-                });
-                console.log(prDiff.body);
+                // const { data: prDiff } = await octokit.rest.pulls.get({
+                //   owner: pr_owner,
+                //   repo: repo,
+                //   pull_number: pr_number,
+                //   mediaType: {
+                //     format: "diff"
+                //   }
+                // })
+                // console.log(prDiff.body)
             }
             else {
                 console.log(`I don't care about requesting approvals! Will just check who already approved`);
