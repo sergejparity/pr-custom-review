@@ -55,7 +55,7 @@ async function run(): Promise<void> {
 
     const token: string = core.getInput('token')
     const octokit = github.getOctokit(token)
-    const repo = payload.pull_request.url
+    const repo = payload.repository.url
     const pr_number = payload.pull_request.number
     const pr_diff = payload.pull_request.diff_url
     const pr_owner = payload.pull_request.user.login
@@ -63,6 +63,10 @@ async function run(): Promise<void> {
     const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`
     const workflow_name = `${process.env.GITHUB_WORKFLOW}`
     const organization: string = process.env.GITHUB_REPOSITORY?.split("/")[0]!
+
+    console.log(`repo: ${repo}`)
+    console.log(`pr_owner: ${pr_owner}`)
+    console.log(`diff url: ${pr_diff}`)
 
     // No breaking changes - no cry. Set status OK and exit.
     if (process.env.CUSTOM_REVIEW_REQUIRED == 'not_required') {
@@ -123,7 +127,6 @@ async function run(): Promise<void> {
       })
 
       const {data: prDiff } = await octokit.rest.pulls.get({
-        ...context.repo,
         owner: pr_owner,
         repo: repo,
         pull_number:pr_number,

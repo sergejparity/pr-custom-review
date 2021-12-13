@@ -89,7 +89,7 @@ function run() {
             const payload = context.payload;
             const token = core.getInput('token');
             const octokit = github.getOctokit(token);
-            const repo = payload.pull_request.url;
+            const repo = payload.repository.url;
             const pr_number = payload.pull_request.number;
             const pr_diff = payload.pull_request.diff_url;
             const pr_owner = payload.pull_request.user.login;
@@ -97,6 +97,9 @@ function run() {
             const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`;
             const workflow_name = `${process.env.GITHUB_WORKFLOW}`;
             const organization = (_a = process.env.GITHUB_REPOSITORY) === null || _a === void 0 ? void 0 : _a.split("/")[0];
+            console.log(`repo: ${repo}`);
+            console.log(`pr_owner: ${pr_owner}`);
+            console.log(`diff url: ${pr_diff}`);
             // No breaking changes - no cry. Set status OK and exit.
             if (process.env.CUSTOM_REVIEW_REQUIRED == 'not_required') {
                 console.log(`Special approval of this PR is not required.`);
@@ -132,9 +135,14 @@ function run() {
                 console.log(`I'm going to request someones approval!!!`); //DEBUG
                 assignReviewers(octokit, Array.from(reviewer_persons_set), Array.from(reviewer_teams_set), pr_number);
                 octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'failure', context: workflow_name, target_url: workflow_url, description: `PR contains changes subject to special review. Review requested from: ${Array.from(reviewer_persons_set)}` }));
-                const { data: prDiff } = yield octokit.rest.pulls.get(Object.assign(Object.assign({}, context.repo), { owner: pr_owner, repo: repo, pull_number: pr_number, mediaType: {
+                const { data: prDiff } = yield octokit.rest.pulls.get({
+                    owner: pr_owner,
+                    repo: repo,
+                    pull_number: pr_number,
+                    mediaType: {
                         format: "diff"
-                    } }));
+                    }
+                });
                 console.log(prDiff.body);
             }
             else {
