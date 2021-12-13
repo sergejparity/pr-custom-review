@@ -5,6 +5,7 @@ import * as fs from 'fs'
 import * as YAML from 'yaml'
 import { EOL } from 'os'
 import { Settings, ReviewGatekeeper } from './review_gatekeeper'
+import { stderr } from 'process'
 
 export async function assignReviewers(client: any, reviewer_persons: string[], reviewer_teams: string[], pr_number: number) {
   try {
@@ -68,6 +69,26 @@ async function run(): Promise<void> {
     console.log(`pr_owner: ${pr_owner}`)
     console.log(`diff url: ${pr_diff}`)
 
+    // experiment with shell exec
+    // const { exec } = require("child_process");
+
+    // exec("git --no-pager diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -U1 | { grep 🔒 || true; }", (error, stdout, stderr) => {
+    //   if (error) {
+    //     console.log(`error: ${error.message}`);
+    //     return;
+    //   }
+    //   if (stderr) {
+    //     console.log(`stderr: ${stderr}`);
+    //     return;
+    //   }
+    //   console.log(`stdout: ${stdout}`);
+    // });
+
+    const execSync = require('child_process').execSync;
+    // import { execSync } from 'child_process';  // replace ^ if using ES modules
+    const output = execSync('ls', { encoding: 'utf-8' });  // the default is 'buffer'
+    console.log('Output was:\n', output);
+
     // No breaking changes - no cry. Set status OK and exit.
     if (process.env.CUSTOM_REVIEW_REQUIRED == 'not_required') {
       console.log(`Special approval of this PR is not required.`)
@@ -126,11 +147,11 @@ async function run(): Promise<void> {
         description: `PR contains changes subject to special review. Review requested from: ${Array.from(reviewer_persons_set)}`
       })
 
-      const {data: prDiff } = await octokit.rest.pulls.get({
+      const { data: prDiff } = await octokit.rest.pulls.get({
         owner: pr_owner,
         repo: repo,
-        pull_number:pr_number,
-        mediaType:{
+        pull_number: pr_number,
+        mediaType: {
           format: "diff"
         }
       })
