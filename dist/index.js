@@ -107,6 +107,7 @@ function run() {
             const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;
             const search_res = diff_body.data.match(re);
             console.log(`Search result: ${search_res}`);
+            console.log(`Search arr length: ${search_res.length()}`);
             // experiment with shell exec
             // const { exec } = require("child_process");
             // exec("git --no-pager diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -U1 | { grep 🔒 || true; }", (error, stdout, stderr) => {
@@ -125,7 +126,8 @@ function run() {
             // const output = execSync("git --no-pager diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -U1 | grep 🔒 ", { encoding: 'utf-8' });  // the default is 'buffer'
             // console.log('Output was:\n', output);
             // No breaking changes - no cry. Set status OK and exit.
-            if (process.env.CUSTOM_REVIEW_REQUIRED == 'not_required') {
+            if (!search_res.length()) {
+                // if (process.env.CUSTOM_REVIEW_REQUIRED == 'not_required') {
                 console.log(`Special approval of this PR is not required.`);
                 octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'success', context: workflow_name, target_url: workflow_url, description: "Special approval of this PR is not required." }));
                 return;
