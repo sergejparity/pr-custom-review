@@ -103,8 +103,10 @@ function run() {
             const diff_body = yield octokit.request(pr_diff);
             console.log(typeof diff_body);
             console.log(typeof diff_body.data);
-            console.log(diff_body.data.instanceof());
             console.log(diff_body.data);
+            const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;
+            const search_res = diff_body.data.match(re);
+            console.log(`Search result: ${search_res}`);
             // experiment with shell exec
             // const { exec } = require("child_process");
             // exec("git --no-pager diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -U1 | { grep 🔒 || true; }", (error, stdout, stderr) => {
