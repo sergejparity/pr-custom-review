@@ -79,6 +79,8 @@ async function run(): Promise<void> {
     const search_res = diff_body.data.match(re)
     console.log(`Search result: ${search_res}`)
     console.log(`Search res type: ${typeof search_res}`)
+    console.log(`Search res is instance of Array? ${search_res instanceof Array}`)
+
 
     // experiment with shell exec
     // const { exec } = require("child_process");
