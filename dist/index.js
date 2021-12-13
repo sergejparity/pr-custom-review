@@ -89,7 +89,9 @@ function run() {
             const payload = context.payload;
             const token = core.getInput('token');
             const octokit = github.getOctokit(token);
+            const repo = payload.pull_request.url;
             const pr_number = payload.pull_request.number;
+            const pr_diff = payload.pull_request.diff_url;
             const pr_owner = payload.pull_request.user.login;
             const sha = payload.pull_request.head.sha;
             const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`;
@@ -130,6 +132,10 @@ function run() {
                 console.log(`I'm going to request someones approval!!!`); //DEBUG
                 assignReviewers(octokit, Array.from(reviewer_persons_set), Array.from(reviewer_teams_set), pr_number);
                 octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'failure', context: workflow_name, target_url: workflow_url, description: `PR contains changes subject to special review. Review requested from: ${Array.from(reviewer_persons_set)}` }));
+                const { data: prDiff } = yield octokit.rest.pulls.get(Object.assign(Object.assign({}, context.repo), { owner: pr_owner, repo: repo, pull_number: pr_number, mediaType: {
+                        format: "diff"
+                    } }));
+                console.log(prDiff.body);
             }
             else {
                 console.log(`I don't care about requesting approvals! Will just check who already approved`);
