@@ -79,7 +79,7 @@ async function run(): Promise<void> {
     const search_res = diff_body.data.match(re)
     console.log(`Search result: ${search_res}`)
     console.log(`Search res type: ${typeof search_res}`)
-    console.log(`Search res is instance of Array? ${search_res instanceof Array}`)
+    console.log(`Search res is instance of Array? ${search_res.length}`)
 
 
     // experiment with shell exec
@@ -103,7 +103,7 @@ async function run(): Promise<void> {
     // console.log('Output was:\n', output);
 
     // No breaking changes - no cry. Set status OK and exit.
-    if (search_res == null) {
+    if (!search_res.length) {
     // if (process.env.CUSTOM_REVIEW_REQUIRED == 'not_required') {
       console.log(`Special approval of this PR is not required.`)
 
