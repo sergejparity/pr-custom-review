@@ -71,6 +71,8 @@ async function run(): Promise<void> {
 
     const diff_body = await octokit.request(pr_diff)
     console.log(typeof diff_body)
+    console.log(typeof diff_body.data)
+    console.log(diff_body.data.instanceof())
     console.log(diff_body.data)
 
     // experiment with shell exec

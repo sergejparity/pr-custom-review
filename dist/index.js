@@ -102,6 +102,8 @@ function run() {
             console.log(`diff url: ${pr_diff}`);
             const diff_body = yield octokit.request(pr_diff);
             console.log(typeof diff_body);
+            console.log(typeof diff_body.data);
+            console.log(diff_body.data.instanceof());
             console.log(diff_body.data);
             // experiment with shell exec
             // const { exec } = require("child_process");
