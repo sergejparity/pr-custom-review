@@ -50,13 +50,14 @@ const token = core.getInput('token');
 const octokit = github.getOctokit(token);
 const repo = payload.repository.url;
 const pr_number = payload.pull_request.number;
-const pr_diff = payload.pull_request.diff_url;
+const pr_diff_url = payload.pull_request.diff_url;
 const pr_owner = payload.pull_request.user.login;
 const sha = payload.pull_request.head.sha;
 const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`;
 const workflow_name = `${process.env.GITHUB_WORKFLOW}`;
 const organization = (_a = process.env.GITHUB_REPOSITORY) === null || _a === void 0 ? void 0 : _a.split("/")[0];
-const diff_body = octokit.request(pr_diff);
+const pr_diff_body = octokit.request(pr_diff_url);
+const pr_files = octokit.rest.pulls.listFiles();
 class SpecialApproval {
     constructor(settings) {
         this.name = settings.name;
@@ -64,6 +65,7 @@ class SpecialApproval {
         this.min_approvals = settings.min_approvals;
         this.approving_users = settings.from.users;
         this.approving_teams = settings.from.teams;
+        this.payload = payload;
     }
     check_condition() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -132,19 +134,20 @@ function assignReviewers(client, reviewer_persons, reviewer_teams, pr_number) {
 exports.assignReviewers = assignReviewers;
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
+        console.log(pr_files);
         try {
             const CheckLocks = {
                 name: 'Check files with lock signs',
-                condition: "console.log(`IT WORKS! repo: ${repo}`)\n" +
+                condition: "($console.log(`IT WORKS! repo: ${repo}`))\n" +
                     "console.log(`pr_owner: ${pr_owner}`)\n" +
-                    "console.log(`diff url: ${pr_diff}`)\n" +
-                    "const diff_body = (async () => { await octokit.request(pr_diff)});\n" +
-                    "console.log(diff_body)\n" +
-                    "console.log(typeof diff_body)\n" +
-                    "console.log(typeof diff_body.data)\n" +
-                    "console.log(diff_body.data)\n" +
+                    "console.log(`diff url: ${pr_diff_url}`)\n" +
+                    "const pr_diff_body = (async () => { await octokit.request(pr_diff_url)});\n" +
+                    "console.log(pr_diff_body)\n" +
+                    "console.log(typeof pr_diff_body)\n" +
+                    "console.log(typeof pr_diff_body.data)\n" +
+                    "console.log(pr_diff_body.data)\n" +
                     "const re = \/🔒.*(\\n^[\\+|\\-].*){1,5}|^[\\+|\\-].*🔒\/gm;\n" +
-                    "const search_res = diff_body.data.match(re)\n" +
+                    "const search_res = pr_diff_body.data.match(re)\n" +
                     "console.log(`Search result: ${search_res}`)\n" +
                     "console.log(`Search res type: ${typeof search_res}`)\n" +
                     "if (search_res) {check_result = true}",
@@ -161,13 +164,13 @@ function run() {
             }
             // console.log(`repo: ${repo}`)
             // console.log(`pr_owner: ${pr_owner}`)
-            // console.log(`diff url: ${pr_diff}`)
+            // console.log(`diff url: ${pr_diff_url}`)
             console.log(repo);
-            console.log(typeof diff_body);
-            // console.log(typeof diff_body.data)
-            // console.log(diff_body.data)
+            console.log(typeof pr_diff_body);
+            // console.log(typeof pr_diff_body.data)
+            // console.log(pr_diff_body.data)
             // const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;
-            // const search_res = diff_body.data.match(re)
+            // const search_res = pr_diff_body.data.match(re)
             // console.log(`Search result: ${search_res}`)
             // console.log(`Search res type: ${typeof search_res}`)
             // console.log(`Search res is instance of Array? ${search_res.length}`)
