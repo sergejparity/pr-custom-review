@@ -33,7 +33,7 @@ export class SpecialApproval {
     this.approving_teams = settings.from.teams
   }
 
-  check_condition(): boolean{
+  async check_condition(): Promise<boolean>{
     console.log(`enter check_condition func`)
     var check_result: boolean = false
     var F = new Function(this.condition)

@@ -51,13 +51,15 @@ class SpecialApproval {
         this.approving_teams = settings.from.teams;
     }
     check_condition() {
-        console.log(`enter check_condition func`);
-        var check_result = false;
-        var F = new Function(this.condition);
-        console.log(check_result);
-        F();
-        console.log(check_result);
-        return check_result;
+        return __awaiter(this, void 0, void 0, function* () {
+            console.log(`enter check_condition func`);
+            var check_result = false;
+            var F = new Function(this.condition);
+            console.log(check_result);
+            F();
+            console.log(check_result);
+            return check_result;
+        });
     }
     describe() {
         console.log(`This obj data: \n name ${this.name} \n ${this.condition}`);
