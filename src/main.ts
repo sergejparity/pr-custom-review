@@ -64,7 +64,7 @@ async function run(): Promise<void> {
     })
 
   
-    console.log(`pr files: ${pr_files}`)
+    console.log(`pr files: ${pr_files.data.values()}`)
     if (
       context.eventName !== 'pull_request' &&
       context.eventName !== 'pull_request_review'
