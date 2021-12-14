@@ -34,6 +34,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.assignReviewers = exports.checkObjProcess = exports.SpecialApproval = void 0;
 const core = __importStar(__nccwpck_require__(2186));
@@ -42,6 +43,19 @@ const fs = __importStar(__nccwpck_require__(5747));
 const YAML = __importStar(__nccwpck_require__(3552));
 const os_1 = __nccwpck_require__(2087);
 const review_gatekeeper_1 = __nccwpck_require__(302);
+const context = github.context;
+const payload = context.payload;
+const token = core.getInput('token');
+const octokit = github.getOctokit(token);
+const repo = payload.repository.url;
+const pr_number = payload.pull_request.number;
+const pr_diff = payload.pull_request.diff_url;
+const pr_owner = payload.pull_request.user.login;
+const sha = payload.pull_request.head.sha;
+const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`;
+const workflow_name = `${process.env.GITHUB_WORKFLOW}`;
+const organization = (_a = process.env.GITHUB_REPOSITORY) === null || _a === void 0 ? void 0 : _a.split("/")[0];
+const diff_body = octokit.request(pr_diff);
 class SpecialApproval {
     constructor(settings) {
         this.name = settings.name;
@@ -114,7 +128,6 @@ function assignReviewers(client, reviewer_persons, reviewer_teams, pr_number) {
 }
 exports.assignReviewers = assignReviewers;
 function run() {
-    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const CheckLocks = {
@@ -137,27 +150,14 @@ function run() {
                     teams: ['s737team']
                 }
             };
-            const context = github.context;
             if (context.eventName !== 'pull_request' &&
                 context.eventName !== 'pull_request_review') {
                 core.setFailed(`Invalid event: ${context.eventName}. This action should be triggered on pull_request and pull_request_review`);
                 return;
             }
-            const payload = context.payload;
-            const token = core.getInput('token');
-            const octokit = github.getOctokit(token);
-            const repo = payload.repository.url;
-            const pr_number = payload.pull_request.number;
-            const pr_diff = payload.pull_request.diff_url;
-            const pr_owner = payload.pull_request.user.login;
-            const sha = payload.pull_request.head.sha;
-            const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`;
-            const workflow_name = `${process.env.GITHUB_WORKFLOW}`;
-            const organization = (_a = process.env.GITHUB_REPOSITORY) === null || _a === void 0 ? void 0 : _a.split("/")[0];
             // console.log(`repo: ${repo}`)
             // console.log(`pr_owner: ${pr_owner}`)
             // console.log(`diff url: ${pr_diff}`)
-            const diff_body = yield octokit.request(pr_diff);
             console.log(repo);
             // console.log(typeof diff_body)
             // console.log(typeof diff_body.data)

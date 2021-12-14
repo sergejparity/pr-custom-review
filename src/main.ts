@@ -8,6 +8,24 @@ import { Settings, ReviewGatekeeper } from './review_gatekeeper'
 import { stderr } from 'process'
 import { resourceLimits } from 'worker_threads'
 
+
+const context = github.context
+
+const payload = context.payload as
+  | Webhooks.PullRequestEvent
+  | Webhooks.PullRequestReviewEvent
+
+const token: string = core.getInput('token')
+const octokit = github.getOctokit(token)
+const repo = payload.repository.url
+const pr_number = payload.pull_request.number
+const pr_diff = payload.pull_request.diff_url
+const pr_owner = payload.pull_request.user.login
+const sha = payload.pull_request.head.sha
+const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`
+const workflow_name = `${process.env.GITHUB_WORKFLOW}`
+const organization: string = process.env.GITHUB_REPOSITORY?.split("/")[0]!
+const diff_body = octokit.request(pr_diff)
 export interface ApprovalSettings {
   name: string
   condition: string
@@ -115,7 +133,7 @@ async function run(): Promise<void> {
 
 
 
-    const context = github.context
+
     if (
       context.eventName !== 'pull_request' &&
       context.eventName !== 'pull_request_review'
@@ -125,26 +143,12 @@ async function run(): Promise<void> {
       )
       return
     }
-    const payload = context.payload as
-      | Webhooks.PullRequestEvent
-      | Webhooks.PullRequestReviewEvent
-
-    const token: string = core.getInput('token')
-    const octokit = github.getOctokit(token)
-    const repo = payload.repository.url
-    const pr_number = payload.pull_request.number
-    const pr_diff = payload.pull_request.diff_url
-    const pr_owner = payload.pull_request.user.login
-    const sha = payload.pull_request.head.sha
-    const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`
-    const workflow_name = `${process.env.GITHUB_WORKFLOW}`
-    const organization: string = process.env.GITHUB_REPOSITORY?.split("/")[0]!
 
     // console.log(`repo: ${repo}`)
     // console.log(`pr_owner: ${pr_owner}`)
     // console.log(`diff url: ${pr_diff}`)
 
-    const diff_body = await octokit.request(pr_diff)
+
     console.log(repo)
     // console.log(typeof diff_body)
     // console.log(typeof diff_body.data)
