@@ -37,6 +37,12 @@ export class SpecialApproval {
   }
 }
 
+export async function checkObjProcess(check_object: SpecialApproval) {
+  console.log(`checkObjProcess invoked`)
+  check_object.describe()
+  console.log(`checkObjProcess finished`)
+}
+
 export async function assignReviewers(client: any, reviewer_persons: string[], reviewer_teams: string[], pr_number: number) {
   try {
     console.log(`entering assignReviewers`) //DEBUG
@@ -155,7 +161,9 @@ async function run(): Promise<void> {
     // console.log('Output was:\n', output);
     console.log(`Will try to spawn SpecialApproval`)
     const default_check = new SpecialApproval(CheckLocks as ApprovalSettings)
-    default_check.describe()
+    // default_check.describe()
+
+    checkObjProcess(default_check)
 
     // No breaking changes - no cry. Set status OK and exit.
     if (!search_res) {

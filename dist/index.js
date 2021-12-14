@@ -35,7 +35,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.assignReviewers = exports.SpecialApproval = void 0;
+exports.assignReviewers = exports.checkObjProcess = exports.SpecialApproval = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const fs = __importStar(__nccwpck_require__(5747));
@@ -55,6 +55,14 @@ class SpecialApproval {
     }
 }
 exports.SpecialApproval = SpecialApproval;
+function checkObjProcess(check_object) {
+    return __awaiter(this, void 0, void 0, function* () {
+        console.log(`checkObjProcess invoked`);
+        check_object.describe();
+        console.log(`checkObjProcess finished`);
+    });
+}
+exports.checkObjProcess = checkObjProcess;
 function assignReviewers(client, reviewer_persons, reviewer_teams, pr_number) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -160,7 +168,8 @@ function run() {
             // console.log('Output was:\n', output);
             console.log(`Will try to spawn SpecialApproval`);
             const default_check = new SpecialApproval(CheckLocks);
-            default_check.describe();
+            // default_check.describe()
+            checkObjProcess(default_check);
             // No breaking changes - no cry. Set status OK and exit.
             if (!search_res) {
                 // if (process.env.CUSTOM_REVIEW_REQUIRED == 'not_required') {
