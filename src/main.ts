@@ -121,7 +121,7 @@ async function run(): Promise<void> {
       condition: "console.log(`IT WORKS! repo: ${repo}`)\n"+
       "console.log(`pr_owner: ${pr_owner}`)\n"+
       "console.log(`diff url: ${pr_diff}`)\n"+
-      "const diff_body = async () => {await octokit.request(pr_diff)})();\n"+
+      "const diff_body = async () => {await octokit.request(pr_diff)};\n"+
       "console.log(diff_body)\n"+
       "console.log(typeof diff_body)\n"+
       "console.log(typeof diff_body.data)\n"+
