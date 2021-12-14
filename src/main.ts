@@ -90,9 +90,7 @@ async function run(): Promise<void> {
       }
     }
 
-    console.log(`Will try to spawn SpecialApproval`)
-    const default_check = new SpecialApproval(CheckLocks as ApprovalSettings)
-    default_check.describe()
+
 
 
     const context = github.context
@@ -155,6 +153,9 @@ async function run(): Promise<void> {
     // // import { execSync } from 'child_process';  // replace ^ if using ES modules
     // const output = execSync("git --no-pager diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -U1 | grep 🔒 ", { encoding: 'utf-8' });  // the default is 'buffer'
     // console.log('Output was:\n', output);
+    console.log(`Will try to spawn SpecialApproval`)
+    const default_check = new SpecialApproval(CheckLocks as ApprovalSettings)
+    default_check.describe()
 
     // No breaking changes - no cry. Set status OK and exit.
     if (!search_res) {
