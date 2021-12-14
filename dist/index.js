@@ -93,8 +93,8 @@ function run() {
             const workflow_name = `${process.env.GITHUB_WORKFLOW}`;
             const organization = (_a = process.env.GITHUB_REPOSITORY) === null || _a === void 0 ? void 0 : _a.split("/")[0];
             const pr_diff_body = yield octokit.request(pr_diff_url);
-            // const pr_files = await octokit.rest.pulls.listFiles()
-            // console.log(`pr files: ${pr_files}`)
+            const pr_files = yield octokit.rest.pulls.listFiles();
+            console.log(`pr files: ${pr_files}`);
             if (context.eventName !== 'pull_request' &&
                 context.eventName !== 'pull_request_review') {
                 core.setFailed(`Invalid event: ${context.eventName}. This action should be triggered on pull_request and pull_request_review`);
@@ -103,10 +103,10 @@ function run() {
             // console.log(`repo: ${repo}`)
             // console.log(`pr_owner: ${pr_owner}`)
             // console.log(`diff url: ${pr_diff_url}`)
-            console.log(repo);
-            console.log(typeof pr_diff_body);
+            // console.log(repo)
+            // console.log(typeof pr_diff_body)
             // console.log(typeof pr_diff_body.data)
-            console.log(pr_diff_body.data);
+            // console.log(pr_diff_body.data)
             const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;
             const search_res = pr_diff_body.data.match(re);
             console.log(`Search result: ${search_res}`);

@@ -57,9 +57,9 @@ async function run(): Promise<void> {
     const workflow_name = `${process.env.GITHUB_WORKFLOW}`
     const organization: string = process.env.GITHUB_REPOSITORY?.split("/")[0]!
     const pr_diff_body = await octokit.request(pr_diff_url)
-    // const pr_files = await octokit.rest.pulls.listFiles()
+    const pr_files = await octokit.rest.pulls.listFiles()
   
-    // console.log(`pr files: ${pr_files}`)
+    console.log(`pr files: ${pr_files}`)
     if (
       context.eventName !== 'pull_request' &&
       context.eventName !== 'pull_request_review'
@@ -73,10 +73,10 @@ async function run(): Promise<void> {
     // console.log(`repo: ${repo}`)
     // console.log(`pr_owner: ${pr_owner}`)
     // console.log(`diff url: ${pr_diff_url}`)
-    console.log(repo)
-    console.log(typeof pr_diff_body)
+    // console.log(repo)
+    // console.log(typeof pr_diff_body)
     // console.log(typeof pr_diff_body.data)
-    console.log(pr_diff_body.data)
+    // console.log(pr_diff_body.data)
 
     const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;
     const search_res = pr_diff_body.data.match(re)
