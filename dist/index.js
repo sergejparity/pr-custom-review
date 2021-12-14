@@ -50,6 +50,12 @@ class SpecialApproval {
         this.approving_users = settings.from.users;
         this.approving_teams = settings.from.teams;
     }
+    check_condition() {
+        var check_result = false;
+        this.condition;
+        console.log(check_result);
+        return check_result;
+    }
     describe() {
         console.log(`This obj data: \n name ${this.name} \n ${this.condition}`);
     }
@@ -113,7 +119,8 @@ function run() {
                     "const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;\n" +
                     "const search_res = diff_body.data.match(re)\n" +
                     "console.log(`Search result: ${search_res}`)\n" +
-                    "console.log(`Search res type: ${typeof search_res}`)",
+                    "console.log(`Search res type: ${typeof search_res}`)\n" +
+                    "if (search_res) {check_result = true}",
                 min_approvals: 2,
                 from: {
                     users: [],
@@ -169,7 +176,8 @@ function run() {
             console.log(`Will try to spawn SpecialApproval`);
             const default_check = new SpecialApproval(CheckLocks);
             // default_check.describe()
-            checkObjProcess(default_check);
+            // checkObjProcess(default_check)
+            default_check.check_condition();
             // No breaking changes - no cry. Set status OK and exit.
             if (!search_res) {
                 // if (process.env.CUSTOM_REVIEW_REQUIRED == 'not_required') {

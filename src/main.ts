@@ -6,6 +6,7 @@ import * as YAML from 'yaml'
 import { EOL } from 'os'
 import { Settings, ReviewGatekeeper } from './review_gatekeeper'
 import { stderr } from 'process'
+import { resourceLimits } from 'worker_threads'
 
 export interface ApprovalSettings {
   name: string
@@ -18,7 +19,7 @@ export interface ApprovalSettings {
 }
 export class SpecialApproval {
   private name: string
-  public condition: String
+  public condition: string
   public min_approvals: number
   public approving_users: string[]
   public approving_teams: string[]
@@ -30,6 +31,13 @@ export class SpecialApproval {
     this.min_approvals = settings.min_approvals
     this.approving_users = settings.from.users
     this.approving_teams = settings.from.teams
+  }
+
+  check_condition(): boolean{
+    var check_result: boolean = false
+    this.condition
+    console.log(check_result)
+    return check_result
   }
 
   describe(): void{
@@ -88,7 +96,8 @@ async function run(): Promise<void> {
       "const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;\n"+
       "const search_res = diff_body.data.match(re)\n"+
       "console.log(`Search result: ${search_res}`)\n"+
-      "console.log(`Search res type: ${typeof search_res}`)",
+      "console.log(`Search res type: ${typeof search_res}`)\n"+
+      "if (search_res) {check_result = true}",
       min_approvals: 2,
       from: {
         users: [],
@@ -163,7 +172,8 @@ async function run(): Promise<void> {
     const default_check = new SpecialApproval(CheckLocks as ApprovalSettings)
     // default_check.describe()
 
-    checkObjProcess(default_check)
+    // checkObjProcess(default_check)
+    default_check.check_condition()
 
     // No breaking changes - no cry. Set status OK and exit.
     if (!search_res) {
