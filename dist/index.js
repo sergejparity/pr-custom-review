@@ -98,7 +98,7 @@ function run() {
                 repo: payload.repository.name,
                 pull_number: pr_number
             });
-            console.log(`pr files: ${pr_files.data.values()}`);
+            console.log(`pr files: ${pr_files.data}`);
             if (context.eventName !== 'pull_request' &&
                 context.eventName !== 'pull_request_review') {
                 core.setFailed(`Invalid event: ${context.eventName}. This action should be triggered on pull_request and pull_request_review`);
