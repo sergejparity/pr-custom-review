@@ -93,7 +93,11 @@ function run() {
             const workflow_name = `${process.env.GITHUB_WORKFLOW}`;
             const organization = (_a = process.env.GITHUB_REPOSITORY) === null || _a === void 0 ? void 0 : _a.split("/")[0];
             const pr_diff_body = yield octokit.request(pr_diff_url);
-            const pr_files = yield octokit.rest.pulls.listFiles();
+            const pr_files = yield octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}/files', {
+                owner: payload.repository.owner.login,
+                repo: payload.repository.name,
+                pull_number: pr_number
+            });
             console.log(`pr files: ${pr_files}`);
             if (context.eventName !== 'pull_request' &&
                 context.eventName !== 'pull_request_review') {

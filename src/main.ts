@@ -57,7 +57,12 @@ async function run(): Promise<void> {
     const workflow_name = `${process.env.GITHUB_WORKFLOW}`
     const organization: string = process.env.GITHUB_REPOSITORY?.split("/")[0]!
     const pr_diff_body = await octokit.request(pr_diff_url)
-    const pr_files = await octokit.rest.pulls.listFiles()
+    const pr_files = await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}/files', {
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      pull_number: pr_number
+    })
+
   
     console.log(`pr files: ${pr_files}`)
     if (
