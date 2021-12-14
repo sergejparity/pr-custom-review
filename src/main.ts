@@ -7,6 +7,36 @@ import { EOL } from 'os'
 import { Settings, ReviewGatekeeper } from './review_gatekeeper'
 import { stderr } from 'process'
 
+export interface ApprovalSettings {
+  name: string
+  condition: string
+  min_approvals: number
+  from: {
+    users: string[]
+    teams: string[]
+  }
+}
+export class SpecialApproval {
+  private name: string
+  public condition: String
+  public min_approvals: number
+  public approving_users: string[]
+  public approving_teams: string[]
+
+
+  constructor(settings: ApprovalSettings){
+    this.name = settings.name
+    this.condition = settings.condition
+    this.min_approvals = settings.min_approvals
+    this.approving_users = settings.from.users
+    this.approving_teams = settings.from.teams
+  }
+
+  describe(): void{
+    console.log(`This obj data: \n name ${this.name} \n ${this.condition}`)
+  }
+}
+
 export async function assignReviewers(client: any, reviewer_persons: string[], reviewer_teams: string[], pr_number: number) {
   try {
     console.log(`entering assignReviewers`) //DEBUG
@@ -40,6 +70,31 @@ export async function assignReviewers(client: any, reviewer_persons: string[], r
 
 async function run(): Promise<void> {
   try {
+    const CheckLocks: ApprovalSettings = {
+      name: 'Check files with lock signs',
+      condition: "console.log(`repo: ${repo}`)\n"+
+      "console.log(`pr_owner: ${pr_owner}`)\n"+
+      "console.log(`diff url: ${pr_diff}`)\n"+
+      "const diff_body = await octokit.request(pr_diff)\n"+
+      "console.log(typeof diff_body)\n"+
+      "console.log(typeof diff_body.data)\n"+
+      "console.log(diff_body.data)\n"+
+      "const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;\n"+
+      "const search_res = diff_body.data.match(re)\n"+
+      "console.log(`Search result: ${search_res}`)\n"+
+      "console.log(`Search res type: ${typeof search_res}`)",
+      min_approvals: 2,
+      from: {
+        users: [],
+        teams: ['s737team']
+      }
+    }
+
+    console.log(`Will try to spawn SpecialApproval`)
+    const default_check = new SpecialApproval(CheckLocks as ApprovalSettings)
+    default_check.describe()
+
+
     const context = github.context
     if (
       context.eventName !== 'pull_request' &&
@@ -75,7 +130,6 @@ async function run(): Promise<void> {
     console.log(diff_body.data)
 
     const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;
-
     const search_res = diff_body.data.match(re)
     console.log(`Search result: ${search_res}`)
     console.log(`Search res type: ${typeof search_res}`)

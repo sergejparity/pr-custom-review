@@ -35,13 +35,26 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.assignReviewers = void 0;
+exports.assignReviewers = exports.SpecialApproval = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const fs = __importStar(__nccwpck_require__(5747));
 const YAML = __importStar(__nccwpck_require__(3552));
 const os_1 = __nccwpck_require__(2087);
 const review_gatekeeper_1 = __nccwpck_require__(302);
+class SpecialApproval {
+    constructor(settings) {
+        this.name = settings.name;
+        this.condition = settings.condition;
+        this.min_approvals = settings.min_approvals;
+        this.approving_users = settings.from.users;
+        this.approving_teams = settings.from.teams;
+    }
+    describe() {
+        console.log(`This obj data: \n name ${this.name} \n ${this.condition}`);
+    }
+}
+exports.SpecialApproval = SpecialApproval;
 function assignReviewers(client, reviewer_persons, reviewer_teams, pr_number) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -80,6 +93,28 @@ function run() {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            const CheckLocks = {
+                name: 'Check files with lock signs',
+                condition: "console.log(`repo: ${repo}`)\n" +
+                    "console.log(`pr_owner: ${pr_owner}`)\n" +
+                    "console.log(`diff url: ${pr_diff}`)\n" +
+                    "const diff_body = await octokit.request(pr_diff)\n" +
+                    "console.log(typeof diff_body)\n" +
+                    "console.log(typeof diff_body.data)\n" +
+                    "console.log(diff_body.data)\n" +
+                    "const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;\n" +
+                    "const search_res = diff_body.data.match(re)\n" +
+                    "console.log(`Search result: ${search_res}`)\n" +
+                    "console.log(`Search res type: ${typeof search_res}`)",
+                min_approvals: 2,
+                from: {
+                    users: [],
+                    teams: ['s737team']
+                }
+            };
+            console.log(`Will try to spawn SpecialApproval`);
+            const default_check = new SpecialApproval(CheckLocks);
+            default_check.describe();
             const context = github.context;
             if (context.eventName !== 'pull_request' &&
                 context.eventName !== 'pull_request_review') {
