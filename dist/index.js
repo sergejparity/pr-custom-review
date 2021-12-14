@@ -34,70 +34,62 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.assignReviewers = exports.checkObjProcess = exports.SpecialApproval = void 0;
+exports.assignReviewers = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const fs = __importStar(__nccwpck_require__(5747));
 const YAML = __importStar(__nccwpck_require__(3552));
 const os_1 = __nccwpck_require__(2087);
 const review_gatekeeper_1 = __nccwpck_require__(302);
-const dummy = "asdf";
-const context = github.context;
-const payload = context.payload;
-const token = core.getInput('token');
-const octokit = github.getOctokit(token);
-const repo = payload.repository.url;
-const pr_number = payload.pull_request.number;
-const pr_diff_url = payload.pull_request.diff_url;
-const pr_owner = payload.pull_request.user.login;
-const sha = payload.pull_request.head.sha;
-const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`;
-const workflow_name = `${process.env.GITHUB_WORKFLOW}`;
-const organization = (_a = process.env.GITHUB_REPOSITORY) === null || _a === void 0 ? void 0 : _a.split("/")[0];
-const pr_diff_body = octokit.request(pr_diff_url);
-const pr_files = octokit.rest.pulls.listFiles();
-class SpecialApproval {
-    constructor(settings) {
-        this.name = settings.name;
-        this.condition = settings.condition;
-        this.min_approvals = settings.min_approvals;
-        this.approving_users = settings.from.users;
-        this.approving_teams = settings.from.teams;
-        this.payload = payload;
-    }
-    check_condition() {
-        return __awaiter(this, void 0, void 0, function* () {
-            var check_result = false;
-            console.log(repo);
-            try {
-                console.log(`enter check_condition func`);
-                eval(this.condition);
-                console.log(check_result);
-                console.log(repo);
-                // F()
-                console.log(check_result);
-            }
-            catch (error) {
-                console.log("error: ", error);
-            }
-            return check_result;
-        });
-    }
-    describe() {
-        console.log(`This obj data: \n name ${this.name} \n ${this.condition}`);
-    }
-}
-exports.SpecialApproval = SpecialApproval;
-function checkObjProcess(check_object) {
-    return __awaiter(this, void 0, void 0, function* () {
-        console.log(`checkObjProcess invoked`);
-        check_object.describe();
-        console.log(`checkObjProcess finished`);
-    });
-}
-exports.checkObjProcess = checkObjProcess;
+// export interface ApprovalSettings {
+//   name: string
+//   condition: string
+//   min_approvals: number
+//   from: {
+//     users: string[]
+//     teams: string[]
+//   }
+// }
+// export class SpecialApproval {
+//   private name: string
+//   public condition: string
+//   public min_approvals: number
+//   public approving_users: string[]
+//   public approving_teams: string[]
+//   public payload: any
+//   constructor(settings: ApprovalSettings) {
+//     this.name = settings.name
+//     this.condition = settings.condition
+//     this.min_approvals = settings.min_approvals
+//     this.approving_users = settings.from.users
+//     this.approving_teams = settings.from.teams
+//     this.payload = payload
+//   }
+//   async check_condition(): Promise<boolean> {
+//     var check_result: boolean = false
+//     console.log(repo)
+//     try {
+//       console.log(`enter check_condition func`)
+//       eval(this.condition)
+//       console.log(check_result)
+//       console.log(repo)
+//       // F()
+//       console.log(check_result)
+//     } catch (error) {
+//       console.log("error: ", error)
+//     }
+//     return check_result
+//   }
+//   describe(): void {
+//     console.log(`This obj data: \n name ${this.name} \n ${this.condition}`)
+//   }
+// }
+// export async function checkObjProcess(check_object: SpecialApproval) {
+//   console.log(`checkObjProcess invoked`)
+//   check_object.describe()
+//   console.log(`checkObjProcess finished`)
+// }
 function assignReviewers(client, reviewer_persons, reviewer_teams, pr_number) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -133,30 +125,45 @@ function assignReviewers(client, reviewer_persons, reviewer_teams, pr_number) {
 }
 exports.assignReviewers = assignReviewers;
 function run() {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
-        console.log(pr_files);
+        const context = github.context;
+        const payload = context.payload;
+        const token = core.getInput('token');
+        const octokit = github.getOctokit(token);
+        const repo = payload.repository.url;
+        const pr_number = payload.pull_request.number;
+        const pr_diff_url = payload.pull_request.diff_url;
+        const pr_owner = payload.pull_request.user.login;
+        const sha = payload.pull_request.head.sha;
+        const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`;
+        const workflow_name = `${process.env.GITHUB_WORKFLOW}`;
+        const organization = (_a = process.env.GITHUB_REPOSITORY) === null || _a === void 0 ? void 0 : _a.split("/")[0];
+        const pr_diff_body = yield octokit.request(pr_diff_url);
+        const pr_files = yield octokit.rest.pulls.listFiles();
+        console.log(`pr files: ${pr_files}`);
         try {
-            const CheckLocks = {
-                name: 'Check files with lock signs',
-                condition: "($console.log(`IT WORKS! repo: ${repo}`))\n" +
-                    "console.log(`pr_owner: ${pr_owner}`)\n" +
-                    "console.log(`diff url: ${pr_diff_url}`)\n" +
-                    "const pr_diff_body = (async () => { await octokit.request(pr_diff_url)});\n" +
-                    "console.log(pr_diff_body)\n" +
-                    "console.log(typeof pr_diff_body)\n" +
-                    "console.log(typeof pr_diff_body.data)\n" +
-                    "console.log(pr_diff_body.data)\n" +
-                    "const re = \/🔒.*(\\n^[\\+|\\-].*){1,5}|^[\\+|\\-].*🔒\/gm;\n" +
-                    "const search_res = pr_diff_body.data.match(re)\n" +
-                    "console.log(`Search result: ${search_res}`)\n" +
-                    "console.log(`Search res type: ${typeof search_res}`)\n" +
-                    "if (search_res) {check_result = true}",
-                min_approvals: 2,
-                from: {
-                    users: [],
-                    teams: ['s737team']
-                }
-            };
+            //   const CheckLocks: ApprovalSettings = {
+            //     name: 'Check files with lock signs',
+            //     condition: "($console.log(`IT WORKS! repo: ${repo}`))\n"+
+            //     "console.log(`pr_owner: ${pr_owner}`)\n"+
+            //     "console.log(`diff url: ${pr_diff_url}`)\n"+
+            //     "const pr_diff_body = (async () => { await octokit.request(pr_diff_url)});\n"+
+            //     "console.log(pr_diff_body)\n"+
+            //     "console.log(typeof pr_diff_body)\n"+
+            //     "console.log(typeof pr_diff_body.data)\n"+
+            //     "console.log(pr_diff_body.data)\n"+
+            //     "const re = \/🔒.*(\\n^[\\+|\\-].*){1,5}|^[\\+|\\-].*🔒\/gm;\n"+
+            //     "const search_res = pr_diff_body.data.match(re)\n"+
+            //     "console.log(`Search result: ${search_res}`)\n"+
+            //     "console.log(`Search res type: ${typeof search_res}`)\n"+
+            //     "if (search_res) {check_result = true}",
+            //     min_approvals: 2,
+            //     from: {
+            //       users: [],
+            //       teams: ['s737team']
+            //     }
+            //   }
             if (context.eventName !== 'pull_request' &&
                 context.eventName !== 'pull_request_review') {
                 core.setFailed(`Invalid event: ${context.eventName}. This action should be triggered on pull_request and pull_request_review`);
@@ -169,9 +176,9 @@ function run() {
             console.log(typeof pr_diff_body);
             // console.log(typeof pr_diff_body.data)
             // console.log(pr_diff_body.data)
-            // const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;
-            // const search_res = pr_diff_body.data.match(re)
-            // console.log(`Search result: ${search_res}`)
+            const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;
+            const search_res = pr_diff_body.data.match(re);
+            console.log(`Search result: ${search_res}`);
             // console.log(`Search res type: ${typeof search_res}`)
             // console.log(`Search res is instance of Array? ${search_res.length}`)
             // experiment with shell exec
@@ -191,13 +198,18 @@ function run() {
             // // import { execSync } from 'child_process';  // replace ^ if using ES modules
             // const output = execSync("git --no-pager diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -U1 | grep 🔒 ", { encoding: 'utf-8' });  // the default is 'buffer'
             // console.log('Output was:\n', output);
-            console.log(`Will try to spawn SpecialApproval`);
-            const default_check = new SpecialApproval(CheckLocks);
-            // default_check.describe()
+            // console.log(`Will try to spawn SpecialApproval`)
+            // const default_check = new SpecialApproval(CheckLocks as ApprovalSettings)
+            // // default_check.describe()
             // checkObjProcess(default_check)
-            default_check.check_condition();
+            // default_check.check_condition()
             // No breaking changes - no cry. Set status OK and exit.
-            if (false) {}
+            // if (false) {
+            if (process.env.CUSTOM_REVIEW_REQUIRED == 'not_required') {
+                console.log(`Special approval of this PR is not required.`);
+                octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'success', context: workflow_name, target_url: workflow_url, description: "Special approval of this PR is not required." }));
+                return;
+            }
             // Read values from config file if it exists
             const config_file = fs.readFileSync(core.getInput('config-file'), 'utf8');
             // Parse contents of config file into variable
