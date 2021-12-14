@@ -158,6 +158,7 @@ function run() {
             // console.log(`pr_owner: ${pr_owner}`)
             // console.log(`diff url: ${pr_diff}`)
             const diff_body = yield octokit.request(pr_diff);
+            console.log(repo);
             // console.log(typeof diff_body)
             // console.log(typeof diff_body.data)
             // console.log(diff_body.data)
