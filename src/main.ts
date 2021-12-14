@@ -34,12 +34,16 @@ export class SpecialApproval {
   }
 
   async check_condition(): Promise<boolean>{
-    console.log(`enter check_condition func`)
     var check_result: boolean = false
-    var F = new Function(this.condition)
-    console.log(check_result)
-    F()
-    console.log(check_result)
+    try{
+      console.log(`enter check_condition func`)
+      var F = new Function(this.condition)
+      console.log(check_result)
+      F()
+      console.log(check_result)
+    } catch(error){
+      console.log("error: ", error)
+    }
     return check_result
   }
 
@@ -136,19 +140,19 @@ async function run(): Promise<void> {
     const workflow_name = `${process.env.GITHUB_WORKFLOW}`
     const organization: string = process.env.GITHUB_REPOSITORY?.split("/")[0]!
 
-    console.log(`repo: ${repo}`)
-    console.log(`pr_owner: ${pr_owner}`)
-    console.log(`diff url: ${pr_diff}`)
+    // console.log(`repo: ${repo}`)
+    // console.log(`pr_owner: ${pr_owner}`)
+    // console.log(`diff url: ${pr_diff}`)
 
     const diff_body = await octokit.request(pr_diff)
-    console.log(typeof diff_body)
-    console.log(typeof diff_body.data)
-    console.log(diff_body.data)
+    // console.log(typeof diff_body)
+    // console.log(typeof diff_body.data)
+    // console.log(diff_body.data)
 
     const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;
     const search_res = diff_body.data.match(re)
-    console.log(`Search result: ${search_res}`)
-    console.log(`Search res type: ${typeof search_res}`)
+    // console.log(`Search result: ${search_res}`)
+    // console.log(`Search res type: ${typeof search_res}`)
     // console.log(`Search res is instance of Array? ${search_res.length}`)
 
 
