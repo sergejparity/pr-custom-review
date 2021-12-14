@@ -43,6 +43,7 @@ const fs = __importStar(__nccwpck_require__(5747));
 const YAML = __importStar(__nccwpck_require__(3552));
 const os_1 = __nccwpck_require__(2087);
 const review_gatekeeper_1 = __nccwpck_require__(302);
+const dummy = "asdf";
 const context = github.context;
 const payload = context.payload;
 const token = core.getInput('token');
@@ -67,10 +68,12 @@ class SpecialApproval {
     check_condition() {
         return __awaiter(this, void 0, void 0, function* () {
             var check_result = false;
+            console.log(repo);
             try {
                 console.log(`enter check_condition func`);
                 var F = new Function(this.condition);
                 console.log(check_result);
+                console.log(repo);
                 F();
                 console.log(check_result);
             }

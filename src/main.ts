@@ -8,7 +8,7 @@ import { Settings, ReviewGatekeeper } from './review_gatekeeper'
 import { stderr } from 'process'
 import { resourceLimits } from 'worker_threads'
 
-
+const dummy = "asdf"
 const context = github.context
 
 const payload = context.payload as
@@ -53,10 +53,12 @@ export class SpecialApproval {
 
   async check_condition(): Promise<boolean>{
     var check_result: boolean = false
+    console.log(repo)
     try{
       console.log(`enter check_condition func`)
       var F = new Function(this.condition)
       console.log(check_result)
+      console.log(repo)
       F()
       console.log(check_result)
     } catch(error){
@@ -148,7 +150,7 @@ async function run(): Promise<void> {
     // console.log(`pr_owner: ${pr_owner}`)
     // console.log(`diff url: ${pr_diff}`)
 
-
+    
     console.log(repo)
     // console.log(typeof diff_body)
     // console.log(typeof diff_body.data)
