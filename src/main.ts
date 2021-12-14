@@ -64,7 +64,11 @@ async function run(): Promise<void> {
     })
 
   
-    console.log(`pr files: ${pr_files.data}`)
+    // console.log(`pr files: ${pr_files.data.map()}`)
+    for (var i = 0; i < pr_files.data.length; i++){
+      var obj = i
+      console.log(obj)
+    }
     if (
       context.eventName !== 'pull_request' &&
       context.eventName !== 'pull_request_review'
