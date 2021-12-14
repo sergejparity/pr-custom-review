@@ -100,7 +100,7 @@ async function run(): Promise<void> {
       "console.log(typeof diff_body)\n"+
       "console.log(typeof diff_body.data)\n"+
       "console.log(diff_body.data)\n"+
-      "const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;\n"+
+      "const re = //🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒//gm;\n"+
       "const search_res = diff_body.data.match(re)\n"+
       "console.log(`Search result: ${search_res}`)\n"+
       "console.log(`Search res type: ${typeof search_res}`)\n"+
