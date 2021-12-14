@@ -71,10 +71,10 @@ class SpecialApproval {
             console.log(repo);
             try {
                 console.log(`enter check_condition func`);
-                var F = new Function(this.condition);
+                eval(this.condition);
                 console.log(check_result);
                 console.log(repo);
-                F();
+                // F()
                 console.log(check_result);
             }
             catch (error) {

@@ -7,6 +7,7 @@ import { EOL } from 'os'
 import { Settings, ReviewGatekeeper } from './review_gatekeeper'
 import { stderr } from 'process'
 import { resourceLimits } from 'worker_threads'
+import { stringify } from 'querystring'
 
 const dummy = "asdf"
 const context = github.context
@@ -56,10 +57,10 @@ export class SpecialApproval {
     console.log(repo)
     try{
       console.log(`enter check_condition func`)
-      var F = new Function(this.condition)
+      eval(this.condition)
       console.log(check_result)
       console.log(repo)
-      F()
+      // F()
       console.log(check_result)
     } catch(error){
       console.log("error: ", error)
