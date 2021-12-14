@@ -96,7 +96,7 @@ async function run(): Promise<void> {
       condition: "console.log(`IT WORKS! repo: ${repo}`)\n"+
       "console.log(`pr_owner: ${pr_owner}`)\n"+
       "console.log(`diff url: ${pr_diff}`)\n"+
-      "const diff_body = await octokit.request(pr_diff)\n"+
+      // "const diff_body = await octokit.request(pr_diff)\n"+
       "console.log(typeof diff_body)\n"+
       "console.log(typeof diff_body.data)\n"+
       "console.log(diff_body.data)\n"+
@@ -149,8 +149,8 @@ async function run(): Promise<void> {
     // console.log(typeof diff_body.data)
     // console.log(diff_body.data)
 
-    const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;
-    const search_res = diff_body.data.match(re)
+    // const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;
+    // const search_res = diff_body.data.match(re)
     // console.log(`Search result: ${search_res}`)
     // console.log(`Search res type: ${typeof search_res}`)
     // console.log(`Search res is instance of Array? ${search_res.length}`)
@@ -183,7 +183,7 @@ async function run(): Promise<void> {
     default_check.check_condition()
 
     // No breaking changes - no cry. Set status OK and exit.
-    if (!search_res) {
+    if (false) {
     // if (process.env.CUSTOM_REVIEW_REQUIRED == 'not_required') {
       console.log(`Special approval of this PR is not required.`)
 
