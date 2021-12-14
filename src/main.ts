@@ -10,6 +10,7 @@ import { resourceLimits } from 'worker_threads'
 import { stringify } from 'querystring'
 
 const dummy = "asdf"
+
 const context = github.context
 
 const payload = context.payload as
@@ -27,6 +28,7 @@ const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_
 const workflow_name = `${process.env.GITHUB_WORKFLOW}`
 const organization: string = process.env.GITHUB_REPOSITORY?.split("/")[0]!
 const diff_body = octokit.request(pr_diff)
+
 export interface ApprovalSettings {
   name: string
   condition: string
@@ -111,13 +113,15 @@ export async function assignReviewers(client: any, reviewer_persons: string[], r
 }
 
 async function run(): Promise<void> {
+
+
   try {
     const CheckLocks: ApprovalSettings = {
       name: 'Check files with lock signs',
       condition: "console.log(`IT WORKS! repo: ${repo}`)\n"+
       "console.log(`pr_owner: ${pr_owner}`)\n"+
       "console.log(`diff url: ${pr_diff}`)\n"+
-      // "const diff_body = await octokit.request(pr_diff)\n"+
+      "const diff_body = await octokit.request(pr_diff)\n"+
       "console.log(typeof diff_body)\n"+
       "console.log(typeof diff_body.data)\n"+
       "console.log(diff_body.data)\n"+
@@ -132,7 +136,6 @@ async function run(): Promise<void> {
         teams: ['s737team']
       }
     }
-
 
 
 
@@ -153,7 +156,7 @@ async function run(): Promise<void> {
 
     
     console.log(repo)
-    // console.log(typeof diff_body)
+    console.log(typeof diff_body)
     // console.log(typeof diff_body.data)
     // console.log(diff_body.data)
 

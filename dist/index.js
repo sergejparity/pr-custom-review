@@ -138,7 +138,7 @@ function run() {
                 condition: "console.log(`IT WORKS! repo: ${repo}`)\n" +
                     "console.log(`pr_owner: ${pr_owner}`)\n" +
                     "console.log(`diff url: ${pr_diff}`)\n" +
-                    // "const diff_body = await octokit.request(pr_diff)\n"+
+                    "const diff_body = await octokit.request(pr_diff)\n" +
                     "console.log(typeof diff_body)\n" +
                     "console.log(typeof diff_body.data)\n" +
                     "console.log(diff_body.data)\n" +
@@ -162,7 +162,7 @@ function run() {
             // console.log(`pr_owner: ${pr_owner}`)
             // console.log(`diff url: ${pr_diff}`)
             console.log(repo);
-            // console.log(typeof diff_body)
+            console.log(typeof diff_body);
             // console.log(typeof diff_body.data)
             // console.log(diff_body.data)
             // const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;
