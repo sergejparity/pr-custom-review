@@ -34,8 +34,11 @@ export class SpecialApproval {
   }
 
   check_condition(): boolean{
+    console.log(`enter check_condition func`)
     var check_result: boolean = false
-    this.condition
+    var F = new Function(this.condition)
+    console.log(check_result)
+    F()
     console.log(check_result)
     return check_result
   }
@@ -86,7 +89,7 @@ async function run(): Promise<void> {
   try {
     const CheckLocks: ApprovalSettings = {
       name: 'Check files with lock signs',
-      condition: "console.log(`repo: ${repo}`)\n"+
+      condition: "console.log(`IT WORKS! repo: ${repo}`)\n"+
       "console.log(`pr_owner: ${pr_owner}`)\n"+
       "console.log(`diff url: ${pr_diff}`)\n"+
       "const diff_body = await octokit.request(pr_diff)\n"+
