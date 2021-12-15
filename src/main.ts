@@ -6,11 +6,9 @@ import * as YAML from 'yaml'
 import { EOL } from 'os'
 import { Settings, ReviewGatekeeper } from './review_gatekeeper'
 
-export function checkCondition(check_type: string, condition: string, pr_diff_body: any, pr_files: any): boolean {
+export function checkCondition(check_type: string, condition: RegExp, pr_diff_body: any, pr_files: any): boolean {
   var condition_match: boolean = false
   console.log("Enter checkCondition func") //DEBUG
-  console.log(`pr_diff_body: ${pr_diff_body}`) //DEBUG
-  console.log(`pr_diff_body.data: ${pr_diff_body.data}`) //DEBUG
   console.log(pr_files) //DEBUG
   console.log(condition) //DEBUG
   console.log(`check_cond: ${pr_diff_body.data.match(condition)}`) //DEBUG
