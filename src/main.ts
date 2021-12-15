@@ -9,6 +9,7 @@ import { Settings, ReviewGatekeeper } from './review_gatekeeper'
 export function checkCondition(check_type: string, condition: string, pr_diff_body: any, pr_files: any): boolean {
   var condition_match: boolean = false
   console.log("Enter checkCondition func") //DEBUG
+  console.log(pr_diff_body.data) //DEBUG
   console.log(pr_diff_body.data.match(condition)) //DEBUG
   if (pr_diff_body.data.match(condition)) {
     console.log(`Condition ${condition} matched`)  //DEBUG
