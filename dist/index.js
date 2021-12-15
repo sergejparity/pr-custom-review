@@ -104,26 +104,33 @@ function run() {
                 repo: payload.repository.name,
                 pull_number: pr_number
             });
-            // condition to search files with changes to locked lines
-            const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;
-            const search_res = pr_diff_body.data.match(re);
-            console.log(`Search result: ${search_res}`);
             // retrieve pr files list
             for (var i = 0; i < pr_files.data.length; i++) {
                 var obj = pr_files.data[i];
                 console.log(obj.filename);
             }
-            // No breaking changes - no cry. Set status OK and exit.
-            // if (false) {
-            if (process.env.CUSTOM_REVIEW_REQUIRED == 'not_required') {
-                console.log(`Special approval of this PR is not required.`);
-                octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'success', context: workflow_name, target_url: workflow_url, description: "Special approval of this PR is not required." }));
-                return;
+            var CUSTOM_REVIEW_REQUIRED = false;
+            const status_messages = [];
+            // condition to search files with changes to locked lines
+            const search_locked_lines_regexp = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;
+            const search_res = pr_diff_body.data.match(search_locked_lines_regexp);
+            console.log(`Search result: ${search_res}`);
+            if (pr_diff_body.data.match(search_locked_lines_regexp)) {
+                console.log(`if condition for locks triggered`); // DEBUG
+                CUSTOM_REVIEW_REQUIRED = true;
+                status_messages.push();
             }
             // Read values from config file if it exists
             const config_file = fs.readFileSync(core.getInput('config-file'), 'utf8');
             // Parse contents of config file into variable
             const config_file_contents = YAML.parse(config_file);
+            // No breaking changes - no cry. Set status OK and exit.
+            // if (false) {
+            if (!CUSTOM_REVIEW_REQUIRED) {
+                console.log(`Special approval of this PR is not required.`);
+                octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'success', context: workflow_name, target_url: workflow_url, description: "Special approval of this PR is not required." }));
+                return;
+            }
             const reviewer_users_set = new Set();
             const reviewer_teams_set = new Set();
             for (const reviewers of config_file_contents.approvals.groups) {

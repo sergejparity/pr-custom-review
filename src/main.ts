@@ -73,24 +73,41 @@ async function run(): Promise<void> {
       repo: payload.repository.name,
       pull_number: pr_number
     })
-
-    // condition to search files with changes to locked lines
-    const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;
-    const search_res = pr_diff_body.data.match(re)
-    console.log(`Search result: ${search_res}`)
-
-
     // retrieve pr files list
     for (var i = 0; i < pr_files.data.length; i++){
       var obj = pr_files.data[i]
       console.log(obj.filename)
     }
 
+    var CUSTOM_REVIEW_REQUIRED: boolean = false
+    const status_messages: string[] = []
+
+
+    // condition to search files with changes to locked lines
+    const search_locked_lines_regexp = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm
+    const search_res = pr_diff_body.data.match(search_locked_lines_regexp)
+    console.log(`Search result: ${search_res}`)
+    if (pr_diff_body.data.match(search_locked_lines_regexp)) {
+      console.log(`if condition for locks triggered`)  // DEBUG
+      CUSTOM_REVIEW_REQUIRED = true
+      status_messages.push()
+    }
+
+
+    // Read values from config file if it exists
+    const config_file = fs.readFileSync(core.getInput('config-file'), 'utf8')
+
+    // Parse contents of config file into variable
+    const config_file_contents = YAML.parse(config_file)
+
+
+
+
 
 
     // No breaking changes - no cry. Set status OK and exit.
     // if (false) {
-    if (process.env.CUSTOM_REVIEW_REQUIRED == 'not_required') {
+    if (!CUSTOM_REVIEW_REQUIRED) {
       console.log(`Special approval of this PR is not required.`)
 
       octokit.rest.repos.createCommitStatus({
@@ -104,11 +121,7 @@ async function run(): Promise<void> {
       return
     }
 
-    // Read values from config file if it exists
-    const config_file = fs.readFileSync(core.getInput('config-file'), 'utf8')
 
-    // Parse contents of config file into variable
-    const config_file_contents = YAML.parse(config_file)
 
     const reviewer_users_set: Set<string> = new Set()
     const reviewer_teams_set: Set<string> = new Set()
