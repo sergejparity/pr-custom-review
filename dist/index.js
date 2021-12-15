@@ -42,22 +42,23 @@ const fs = __importStar(__nccwpck_require__(5747));
 const YAML = __importStar(__nccwpck_require__(3552));
 const os_1 = __nccwpck_require__(2087);
 const review_gatekeeper_1 = __nccwpck_require__(302);
-function assignReviewers(client, reviewer_persons, reviewer_teams, pr_number) {
+function assignReviewers(client, reviewer_users, reviewer_teams, pr_number) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             console.log(`entering assignReviewers`); //DEBUG
-            console.log(`persons length: ${reviewer_persons.length} - ${reviewer_persons}`); //DEBUG
-            if (reviewer_persons) {
+            console.log(`users length: ${reviewer_users.length} - ${reviewer_users}`); //DEBUG
+            if (reviewer_users) {
                 yield client.rest.pulls.requestReviewers({
                     owner: github.context.repo.owner,
                     repo: github.context.repo.repo,
                     pull_number: pr_number,
-                    reviewers: reviewer_persons,
+                    reviewers: reviewer_users,
                 });
-                core.info(`Requested review from users: ${reviewer_persons}.`);
+                core.info(`Requested review from users: ${reviewer_users}.`);
             }
-            console.log(`passed by persons trying teams`); //DEBUG
+            console.log(`passed by users trying teams`); //DEBUG
             console.log(`teams length: ${reviewer_teams}`); //DEBUG
+            // if default GITHUB_TOKEN used request below will fail
             if (reviewer_teams) {
                 yield client.rest.pulls.requestReviewers({
                     owner: github.context.repo.owner,
@@ -81,6 +82,11 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const context = github.context;
+            if (context.eventName !== 'pull_request' &&
+                context.eventName !== 'pull_request_review') {
+                core.setFailed(`Invalid event: ${context.eventName}. This action should be triggered on pull_request and pull_request_review`);
+                return;
+            }
             const payload = context.payload;
             const token = core.getInput('token');
             const octokit = github.getOctokit(token);
@@ -89,8 +95,8 @@ function run() {
             const pr_diff_url = payload.pull_request.diff_url;
             const pr_owner = payload.pull_request.user.login;
             const sha = payload.pull_request.head.sha;
-            const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`;
             const workflow_name = `${process.env.GITHUB_WORKFLOW}`;
+            const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`;
             const organization = (_a = process.env.GITHUB_REPOSITORY) === null || _a === void 0 ? void 0 : _a.split("/")[0];
             const pr_diff_body = yield octokit.request(pr_diff_url);
             const pr_files = yield octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}/files', {
@@ -98,28 +104,15 @@ function run() {
                 repo: payload.repository.name,
                 pull_number: pr_number
             });
-            // console.log(`pr files: ${pr_files.data.map()}`)
+            // condition to search files with changes to locked lines
+            const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;
+            const search_res = pr_diff_body.data.match(re);
+            console.log(`Search result: ${search_res}`);
+            // retrieve pr files list
             for (var i = 0; i < pr_files.data.length; i++) {
                 var obj = pr_files.data[i];
                 console.log(obj.filename);
             }
-            if (context.eventName !== 'pull_request' &&
-                context.eventName !== 'pull_request_review') {
-                core.setFailed(`Invalid event: ${context.eventName}. This action should be triggered on pull_request and pull_request_review`);
-                return;
-            }
-            // console.log(`repo: ${repo}`)
-            // console.log(`pr_owner: ${pr_owner}`)
-            // console.log(`diff url: ${pr_diff_url}`)
-            // console.log(repo)
-            // console.log(typeof pr_diff_body)
-            // console.log(typeof pr_diff_body.data)
-            // console.log(pr_diff_body.data)
-            const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;
-            const search_res = pr_diff_body.data.match(re);
-            console.log(`Search result: ${search_res}`);
-            // console.log(`Search res type: ${typeof search_res}`)
-            // console.log(`Search res is instance of Array? ${search_res.length}`)
             // No breaking changes - no cry. Set status OK and exit.
             // if (false) {
             if (process.env.CUSTOM_REVIEW_REQUIRED == 'not_required') {
@@ -131,13 +124,13 @@ function run() {
             const config_file = fs.readFileSync(core.getInput('config-file'), 'utf8');
             // Parse contents of config file into variable
             const config_file_contents = YAML.parse(config_file);
-            const reviewer_persons_set = new Set();
+            const reviewer_users_set = new Set();
             const reviewer_teams_set = new Set();
             for (const reviewers of config_file_contents.approvals.groups) {
-                if (reviewers.from.persons) {
-                    for (var entry of reviewers.from.persons) {
+                if (reviewers.from.users) {
+                    for (var entry of reviewers.from.users) {
                         if (entry != pr_owner) {
-                            reviewer_persons_set.add(entry);
+                            reviewer_users_set.add(entry);
                         }
                     }
                 }
@@ -147,19 +140,19 @@ function run() {
                     }
                 }
             }
-            console.log(`persons set:`); //DEBUG
-            console.log(reviewer_persons_set); //DEBUG
+            console.log(`users set:`); //DEBUG
+            console.log(reviewer_users_set); //DEBUG
             console.log(`teams set:`); //DEBUG
             console.log(reviewer_teams_set); //DEBUG
-            console.log(Array.from(reviewer_persons_set)); //DEBUG
+            console.log(Array.from(reviewer_users_set)); //DEBUG
             if (context.eventName == 'pull_request') {
                 console.log(`I'm going to request someones approval!!!`); //DEBUG
-                assignReviewers(octokit, Array.from(reviewer_persons_set), Array.from(reviewer_teams_set), pr_number);
-                octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'failure', context: workflow_name, target_url: workflow_url, description: `PR contains changes subject to special review. Review requested from: ${Array.from(reviewer_persons_set)}` }));
+                assignReviewers(octokit, Array.from(reviewer_users_set), Array.from(reviewer_teams_set), pr_number);
+                octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'failure', context: workflow_name, target_url: workflow_url, description: `PR contains changes subject to special review. Review requested from: ${Array.from(reviewer_users_set)}` }));
             }
             else {
                 console.log(`I don't care about requesting approvals! Will just check who already approved`);
-                // aggregate reviewers from persons and teams
+                // aggregate reviewers from users and teams
                 console.log(`org: ${organization}`);
                 const teams_list = yield octokit.rest.teams.list(Object.assign(Object.assign({}, context.repo), { org: organization }));
                 for (const team of teams_list.data) {
@@ -168,7 +161,7 @@ function run() {
                     for (const member of team_list_obj.data) {
                         if (pr_owner != member.login) {
                             console.log(`team_member: ${member.login}`); //debug output
-                            reviewer_persons_set.add(member.login);
+                            reviewer_users_set.add(member.login);
                         }
                     }
                 }
@@ -186,7 +179,7 @@ function run() {
                     }
                 }
                 // check approvals
-                const review_gatekeeper = new review_gatekeeper_1.ReviewGatekeeper(config_file_contents, Array.from(approved_users), reviewer_persons_set, payload.pull_request.user.login);
+                const review_gatekeeper = new review_gatekeeper_1.ReviewGatekeeper(config_file_contents, Array.from(approved_users), reviewer_users_set, payload.pull_request.user.login);
                 // The workflow url can be obtained by combining several environment varialbes, as described below:
                 // https://docs.github.com/en/actions/reference/environment-variables#default-environment-variables
                 core.info(`Setting a status on commit (${sha})`);

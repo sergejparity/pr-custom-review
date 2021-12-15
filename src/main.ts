@@ -6,21 +6,22 @@ import * as YAML from 'yaml'
 import { EOL } from 'os'
 import { Settings, ReviewGatekeeper } from './review_gatekeeper'
 
-export async function assignReviewers(client: any, reviewer_persons: string[], reviewer_teams: string[], pr_number: number) {
+export async function assignReviewers(client: any, reviewer_users: string[], reviewer_teams: string[], pr_number: number) {
   try {
     console.log(`entering assignReviewers`) //DEBUG
-    console.log(`persons length: ${reviewer_persons.length} - ${reviewer_persons}`) //DEBUG
-    if (reviewer_persons) {
+    console.log(`users length: ${reviewer_users.length} - ${reviewer_users}`) //DEBUG
+    if (reviewer_users) {
       await client.rest.pulls.requestReviewers({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
         pull_number: pr_number,
-        reviewers: reviewer_persons,
+        reviewers: reviewer_users,
       });
-      core.info(`Requested review from users: ${reviewer_persons}.`);
+      core.info(`Requested review from users: ${reviewer_users}.`);
     }
-    console.log(`passed by persons trying teams`) //DEBUG
+    console.log(`passed by users trying teams`) //DEBUG
     console.log(`teams length: ${reviewer_teams}`) //DEBUG
+    // if default GITHUB_TOKEN used request below will fail
     if (reviewer_teams) {
       await client.rest.pulls.requestReviewers({
         owner: github.context.repo.owner,
@@ -42,33 +43,6 @@ async function run(): Promise<void> {
 
     const context = github.context
 
-    const payload = context.payload as
-      | Webhooks.PullRequestEvent
-      | Webhooks.PullRequestReviewEvent
-  
-    const token: string = core.getInput('token')
-    const octokit = github.getOctokit(token)
-    const repo = payload.repository.url
-    const pr_number = payload.pull_request.number
-    const pr_diff_url = payload.pull_request.diff_url
-    const pr_owner = payload.pull_request.user.login
-    const sha = payload.pull_request.head.sha
-    const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`
-    const workflow_name = `${process.env.GITHUB_WORKFLOW}`
-    const organization: string = process.env.GITHUB_REPOSITORY?.split("/")[0]!
-    const pr_diff_body = await octokit.request(pr_diff_url)
-    const pr_files = await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}/files', {
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      pull_number: pr_number
-    })
-
-  
-    // console.log(`pr files: ${pr_files.data.map()}`)
-    for (var i = 0; i < pr_files.data.length; i++){
-      var obj = pr_files.data[i]
-      console.log(obj.filename)
-    }
     if (
       context.eventName !== 'pull_request' &&
       context.eventName !== 'pull_request_review'
@@ -79,19 +53,40 @@ async function run(): Promise<void> {
       return
     }
 
-    // console.log(`repo: ${repo}`)
-    // console.log(`pr_owner: ${pr_owner}`)
-    // console.log(`diff url: ${pr_diff_url}`)
-    // console.log(repo)
-    // console.log(typeof pr_diff_body)
-    // console.log(typeof pr_diff_body.data)
-    // console.log(pr_diff_body.data)
+    const payload = context.payload as
+      | Webhooks.PullRequestEvent
+      | Webhooks.PullRequestReviewEvent
 
+    const token: string = core.getInput('token')
+    const octokit = github.getOctokit(token)
+    const repo = payload.repository.url
+    const pr_number = payload.pull_request.number
+    const pr_diff_url = payload.pull_request.diff_url
+    const pr_owner = payload.pull_request.user.login
+    const sha = payload.pull_request.head.sha
+    const workflow_name = `${process.env.GITHUB_WORKFLOW}`
+    const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`
+    const organization: string = process.env.GITHUB_REPOSITORY?.split("/")[0]!
+    const pr_diff_body = await octokit.request(pr_diff_url)
+    const pr_files = await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}/files', {
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      pull_number: pr_number
+    })
+
+    // condition to search files with changes to locked lines
     const re = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;
     const search_res = pr_diff_body.data.match(re)
     console.log(`Search result: ${search_res}`)
-    // console.log(`Search res type: ${typeof search_res}`)
-    // console.log(`Search res is instance of Array? ${search_res.length}`)
+
+
+    // retrieve pr files list
+    for (var i = 0; i < pr_files.data.length; i++){
+      var obj = pr_files.data[i]
+      console.log(obj.filename)
+    }
+
+
 
     // No breaking changes - no cry. Set status OK and exit.
     // if (false) {
@@ -115,14 +110,14 @@ async function run(): Promise<void> {
     // Parse contents of config file into variable
     const config_file_contents = YAML.parse(config_file)
 
-    const reviewer_persons_set: Set<string> = new Set()
+    const reviewer_users_set: Set<string> = new Set()
     const reviewer_teams_set: Set<string> = new Set()
 
     for (const reviewers of config_file_contents.approvals.groups) {
-      if (reviewers.from.persons) {
-        for (var entry of reviewers.from.persons) {
+      if (reviewers.from.users) {
+        for (var entry of reviewers.from.users) {
           if (entry != pr_owner) {
-            reviewer_persons_set.add(entry)
+            reviewer_users_set.add(entry)
           }
         }
       }
@@ -133,15 +128,15 @@ async function run(): Promise<void> {
       }
     }
 
-    console.log(`persons set:`) //DEBUG
-    console.log(reviewer_persons_set) //DEBUG
+    console.log(`users set:`) //DEBUG
+    console.log(reviewer_users_set) //DEBUG
     console.log(`teams set:`) //DEBUG
     console.log(reviewer_teams_set) //DEBUG
-    console.log(Array.from(reviewer_persons_set))  //DEBUG
+    console.log(Array.from(reviewer_users_set))  //DEBUG
 
     if (context.eventName == 'pull_request') {
       console.log(`I'm going to request someones approval!!!`) //DEBUG
-      assignReviewers(octokit, Array.from(reviewer_persons_set), Array.from(reviewer_teams_set), pr_number)
+      assignReviewers(octokit, Array.from(reviewer_users_set), Array.from(reviewer_teams_set), pr_number)
 
       octokit.rest.repos.createCommitStatus({
         ...context.repo,
@@ -149,12 +144,12 @@ async function run(): Promise<void> {
         state: 'failure',
         context: workflow_name,
         target_url: workflow_url,
-        description: `PR contains changes subject to special review. Review requested from: ${Array.from(reviewer_persons_set)}`
+        description: `PR contains changes subject to special review. Review requested from: ${Array.from(reviewer_users_set)}`
       })
     } else {
       console.log(`I don't care about requesting approvals! Will just check who already approved`)
 
-      // aggregate reviewers from persons and teams
+      // aggregate reviewers from users and teams
       console.log(`org: ${organization}`)
 
       const teams_list = await octokit.rest.teams.list({
@@ -174,7 +169,7 @@ async function run(): Promise<void> {
         for (const member of team_list_obj.data) {
           if (pr_owner != member!.login) {
             console.log(`team_member: ${member!.login!}`) //debug output
-            reviewer_persons_set.add(member!.login)
+            reviewer_users_set.add(member!.login)
           }
         }
       }
@@ -199,7 +194,7 @@ async function run(): Promise<void> {
       const review_gatekeeper = new ReviewGatekeeper(
         config_file_contents as Settings,
         Array.from(approved_users),
-        reviewer_persons_set,
+        reviewer_users_set,
         payload.pull_request.user.login
       )
 
