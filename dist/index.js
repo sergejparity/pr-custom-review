@@ -44,6 +44,7 @@ const os_1 = __nccwpck_require__(2087);
 const review_gatekeeper_1 = __nccwpck_require__(302);
 function checkCondition(check_type, condition, pr_diff_body, pr_files) {
     var condition_match = false;
+    // TODO implement file lists evaluation
     console.log("Enter checkCondition func"); //DEBUG
     // console.log(pr_files) //DEBUG
     console.log(`condition: ${condition}`); //DEBUG
@@ -120,7 +121,7 @@ function run() {
                 repo: payload.repository.name,
                 pull_number: pr_number
             });
-            // retrieve pr files list
+            // TODO retrieve pr files list
             for (var i = 0; i < pr_files.data.length; i++) {
                 var obj = pr_files.data[i];
                 console.log(obj.filename);
@@ -133,10 +134,10 @@ function run() {
             console.log(`Search result: ${search_res}`); //DEBUG
             if (pr_diff_body.data.match(search_locked_lines_regexp)) {
                 console.log(`if condition for locks triggered`); //DEBUG
-                console.log(pr_diff_body.data.match(search_locked_lines_regexp));
+                console.log(pr_diff_body.data.match(search_locked_lines_regexp)); //DEBUG
                 CUSTOM_REVIEW_REQUIRED = true;
-                final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team'] });
-                console.log(final_approval_groups);
+                final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: undefined, teams: ['s737team'] });
+                console.log(final_approval_groups); //DEBUG
                 status_messages.push(`LOCKS TOUCHED review required`);
             }
             // Read values from config file if it exists
@@ -165,7 +166,6 @@ function run() {
                 }
             }
             // No breaking changes - no cry. Set status OK and exit.
-            // if (false) {
             if (!CUSTOM_REVIEW_REQUIRED) {
                 console.log(`Special approval of this PR is not required.`);
                 octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'success', context: workflow_name, target_url: workflow_url, description: "Special approval of this PR is not required." }));
@@ -196,10 +196,8 @@ function run() {
             if (context.eventName == 'pull_request') {
                 console.log(`I'm going to request someones approval!!!`); //DEBUG
                 assignReviewers(octokit, Array.from(reviewer_users_set), Array.from(reviewer_teams_set), pr_number);
-                console.log(`STATUS MESSAGES: ${status_messages.join()}`);
-                octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'failure', context: workflow_name, target_url: workflow_url, 
-                    // description: `PR contains changes subject to special review. Review requested from: ${Array.from(reviewer_users_set)}`
-                    description: status_messages.join('\n') }));
+                console.log(`STATUS MESSAGES: ${status_messages.join()}`); //DEBUG
+                octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'failure', context: workflow_name, target_url: workflow_url, description: status_messages.join('\n') }));
             }
             else {
                 console.log(`I don't care about requesting approvals! Will just check who already approved`);

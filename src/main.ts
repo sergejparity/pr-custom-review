@@ -8,6 +8,7 @@ import { Settings, ReviewGatekeeper } from './review_gatekeeper'
 
 export function checkCondition(check_type: string, condition: RegExp, pr_diff_body: any, pr_files: any): boolean {
   var condition_match: boolean = false
+  // TODO implement file lists evaluation
   console.log("Enter checkCondition func") //DEBUG
   // console.log(pr_files) //DEBUG
   console.log(`condition: ${condition}`) //DEBUG
@@ -55,7 +56,7 @@ export async function assignReviewers(client: any, reviewer_users: string[], rev
 
 async function run(): Promise<void> {
   try {
-    type ApprovalGroup = { name: string, min_approvals: number, users: string[], teams: string[] }
+    type ApprovalGroup = { name: string, min_approvals: number, users?: string[], teams?: string[] }
     const final_approval_groups: ApprovalGroup[] = []
 
     const context = github.context
@@ -90,7 +91,7 @@ async function run(): Promise<void> {
       repo: payload.repository.name,
       pull_number: pr_number
     })
-    // retrieve pr files list
+    // TODO retrieve pr files list
     for (var i = 0; i < pr_files.data.length; i++) {
       var obj = pr_files.data[i]
       console.log(obj.filename)
@@ -106,10 +107,10 @@ async function run(): Promise<void> {
     console.log(`Search result: ${search_res}`) //DEBUG
     if (pr_diff_body.data.match(search_locked_lines_regexp)) {
       console.log(`if condition for locks triggered`)  //DEBUG
-      console.log(pr_diff_body.data.match(search_locked_lines_regexp))
+      console.log(pr_diff_body.data.match(search_locked_lines_regexp))  //DEBUG
       CUSTOM_REVIEW_REQUIRED = true
-      final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team'] })
-      console.log(final_approval_groups)
+      final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: undefined, teams: ['s737team'] })
+      console.log(final_approval_groups)  //DEBUG
       status_messages.push(`LOCKS TOUCHED review required`)
     }
 
@@ -143,7 +144,6 @@ async function run(): Promise<void> {
     }
 
     // No breaking changes - no cry. Set status OK and exit.
-    // if (false) {
     if (!CUSTOM_REVIEW_REQUIRED) {
       console.log(`Special approval of this PR is not required.`)
 
@@ -187,7 +187,7 @@ async function run(): Promise<void> {
     if (context.eventName == 'pull_request') {
       console.log(`I'm going to request someones approval!!!`) //DEBUG
       assignReviewers(octokit, Array.from(reviewer_users_set), Array.from(reviewer_teams_set), pr_number)
-      console.log(`STATUS MESSAGES: ${status_messages.join()}`)
+      console.log(`STATUS MESSAGES: ${status_messages.join()}`) //DEBUG
 
       octokit.rest.repos.createCommitStatus({
         ...context.repo,
@@ -195,7 +195,6 @@ async function run(): Promise<void> {
         state: 'failure',
         context: workflow_name,
         target_url: workflow_url,
-        // description: `PR contains changes subject to special review. Review requested from: ${Array.from(reviewer_users_set)}`
         description: status_messages.join('\n')
       })
     } else {
