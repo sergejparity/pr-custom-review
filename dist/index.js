@@ -44,10 +44,11 @@ const os_1 = __nccwpck_require__(2087);
 const review_gatekeeper_1 = __nccwpck_require__(302);
 function checkCondition(check_type, condition, pr_diff_body, pr_files) {
     var condition_match = false;
+    console.log("Enter checkCondition func"); //DEBUG
     if (pr_diff_body.data.match(condition)) {
-        console.log(`Condition ${condition} matched`);
+        console.log(`Condition ${condition} matched`); //DEBUG
         console.log(pr_diff_body.data.match(condition));
-        console.log(`Condition ${condition} matched`);
+        console.log(`Condition ${condition} matched`); //DEBUG
         condition_match = true;
     }
     return condition_match;
