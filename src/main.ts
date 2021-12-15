@@ -128,7 +128,7 @@ async function run(): Promise<void> {
       console.log(approval_group.users)  //DEBUG
       console.log(approval_group.teams)  //DEBUG
       const conditionEtalon: RegExp = /👜.*(\n^[\+|\-].*)|^[\+|\-].*👜/gm
-      const condition: RegExp = approval_group.condition
+      const condition: RegExp = new RegExp(approval_group.condition)
       console.log(`cond_work: ${conditionEtalon}`)
       console.log(`cond_bad: ${condition}`)
       checkCondition(approval_group.check_type, condition, pr_diff_body, pr_files)
