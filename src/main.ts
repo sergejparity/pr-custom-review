@@ -6,6 +6,17 @@ import * as YAML from 'yaml'
 import { EOL } from 'os'
 import { Settings, ReviewGatekeeper } from './review_gatekeeper'
 
+export function checkCondition(check_type: string, condition: string, pr_diff_body: any, pr_files: any): boolean {
+  var condition_match: boolean = false
+  if (pr_diff_body.data.match(condition)) {
+    console.log(`Condition ${condition} matched`)
+    console.log(pr_diff_body.data.match(condition))
+    console.log(`Condition ${condition} matched`)
+    condition_match = true
+  }
+  return condition_match
+}
+
 export async function assignReviewers(client: any, reviewer_users: string[], reviewer_teams: string[], pr_number: number) {
   try {
     console.log(`entering assignReviewers`) //DEBUG
@@ -111,6 +122,7 @@ async function run(): Promise<void> {
       console.log(approval_group.min_approvals)  //DEBUG
       console.log(approval_group.users)  //DEBUG
       console.log(approval_group.teams)  //DEBUG
+      checkCondition(approval_group.check_type, approval_group.condition, pr_diff_body, pr_files)
     }
 
 
@@ -134,7 +146,7 @@ async function run(): Promise<void> {
       return
     }
 
-
+    console.log("Before users evaluation")  //DEBUG
 
     const reviewer_users_set: Set<string> = new Set()
     const reviewer_teams_set: Set<string> = new Set()

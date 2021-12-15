@@ -35,13 +35,24 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.assignReviewers = void 0;
+exports.assignReviewers = exports.checkCondition = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const fs = __importStar(__nccwpck_require__(5747));
 const YAML = __importStar(__nccwpck_require__(3552));
 const os_1 = __nccwpck_require__(2087);
 const review_gatekeeper_1 = __nccwpck_require__(302);
+function checkCondition(check_type, condition, pr_diff_body, pr_files) {
+    var condition_match = false;
+    if (pr_diff_body.data.match(condition)) {
+        console.log(`Condition ${condition} matched`);
+        console.log(pr_diff_body.data.match(condition));
+        console.log(`Condition ${condition} matched`);
+        condition_match = true;
+    }
+    return condition_match;
+}
+exports.checkCondition = checkCondition;
 function assignReviewers(client, reviewer_users, reviewer_teams, pr_number) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -134,6 +145,7 @@ function run() {
                 console.log(approval_group.min_approvals); //DEBUG
                 console.log(approval_group.users); //DEBUG
                 console.log(approval_group.teams); //DEBUG
+                checkCondition(approval_group.check_type, approval_group.condition, pr_diff_body, pr_files);
             }
             // No breaking changes - no cry. Set status OK and exit.
             // if (false) {
@@ -142,6 +154,7 @@ function run() {
                 octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'success', context: workflow_name, target_url: workflow_url, description: "Special approval of this PR is not required." }));
                 return;
             }
+            console.log("Before users evaluation"); //DEBUG
             const reviewer_users_set = new Set();
             const reviewer_teams_set = new Set();
             for (const reviewers of config_file_contents.approvals.groups) {
