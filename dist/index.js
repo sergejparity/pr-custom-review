@@ -81,8 +81,7 @@ function run() {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const approval_groups = [];
-            // const approval_groups: string[] = []
+            const final_approval_groups = [];
             const context = github.context;
             if (context.eventName !== 'pull_request' &&
                 context.eventName !== 'pull_request_review') {
@@ -120,8 +119,8 @@ function run() {
             if (pr_diff_body.data.match(search_locked_lines_regexp)) {
                 console.log(`if condition for locks triggered`); //DEBUG
                 CUSTOM_REVIEW_REQUIRED = true;
-                approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team'] });
-                console.log(approval_groups);
+                final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team'] });
+                console.log(final_approval_groups);
                 status_messages.push();
             }
             // Read values from config file if it exists
@@ -129,12 +128,12 @@ function run() {
             // Parse contents of config file into variable
             const config_file_contents = YAML.parse(config_file);
             for (const approval_group of config_file_contents.approval_groups) {
-                console.log(approval_group.name);
-                console.log(approval_group.condition);
-                console.log(approval_group.check_type);
-                console.log(approval_group.min_approvals);
-                console.log(approval_group.users);
-                console.log(approval_group.teams);
+                console.log(approval_group.name); //DEBUG
+                console.log(approval_group.condition); //DEBUG
+                console.log(approval_group.check_type); //DEBUG
+                console.log(approval_group.min_approvals); //DEBUG
+                console.log(approval_group.users); //DEBUG
+                console.log(approval_group.teams); //DEBUG
             }
             // No breaking changes - no cry. Set status OK and exit.
             // if (false) {

@@ -41,8 +41,7 @@ export async function assignReviewers(client: any, reviewer_users: string[], rev
 async function run(): Promise<void> {
   try {
     type ApprovalGroup = {name: string, min_approvals: number, users: string[], teams: string[]}
-    const approval_groups: ApprovalGroup[] = []
-    // const approval_groups: string[] = []
+    const final_approval_groups: ApprovalGroup[] = []
 
     const context = github.context
 
@@ -93,8 +92,8 @@ async function run(): Promise<void> {
     if (pr_diff_body.data.match(search_locked_lines_regexp)) {
       console.log(`if condition for locks triggered`)  //DEBUG
       CUSTOM_REVIEW_REQUIRED = true
-      approval_groups.push({name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team']})
-      console.log(approval_groups)
+      final_approval_groups.push({name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team']})
+      console.log(final_approval_groups)
       status_messages.push()
     }
 
@@ -106,12 +105,12 @@ async function run(): Promise<void> {
     const config_file_contents = YAML.parse(config_file)
 
     for (const approval_group of config_file_contents.approval_groups) {
-      console.log(approval_group.name)
-      console.log(approval_group.condition)
-      console.log(approval_group.check_type)
-      console.log(approval_group.min_approvals)
-      console.log(approval_group.users)
-      console.log(approval_group.teams)
+      console.log(approval_group.name)  //DEBUG
+      console.log(approval_group.condition)  //DEBUG
+      console.log(approval_group.check_type)  //DEBUG
+      console.log(approval_group.min_approvals)  //DEBUG
+      console.log(approval_group.users)  //DEBUG
+      console.log(approval_group.teams)  //DEBUG
     }
 
 
