@@ -196,7 +196,7 @@ async function run(): Promise<void> {
         context: workflow_name,
         target_url: workflow_url,
         // description: `PR contains changes subject to special review. Review requested from: ${Array.from(reviewer_users_set)}`
-        description: status_messages.join()
+        description: status_messages.join('\n')
       })
     } else {
       console.log(`I don't care about requesting approvals! Will just check who already approved`)

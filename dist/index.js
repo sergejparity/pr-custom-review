@@ -199,7 +199,7 @@ function run() {
                 console.log(`STATUS MESSAGES: ${status_messages.join()}`);
                 octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'failure', context: workflow_name, target_url: workflow_url, 
                     // description: `PR contains changes subject to special review. Review requested from: ${Array.from(reviewer_users_set)}`
-                    description: status_messages.join() }));
+                    description: status_messages.join('\n') }));
             }
             else {
                 console.log(`I don't care about requesting approvals! Will just check who already approved`);
