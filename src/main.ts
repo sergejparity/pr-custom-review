@@ -40,6 +40,9 @@ export async function assignReviewers(client: any, reviewer_users: string[], rev
 
 async function run(): Promise<void> {
   try {
+    type ApprovalGroup = {name: string, min_approvals: number, users: string[], teams: string[]}
+    const approval_groups: ApprovalGroup[] = []
+    // const approval_groups: string[] = []
 
     const context = github.context
 
@@ -84,12 +87,14 @@ async function run(): Promise<void> {
 
 
     // condition to search files with changes to locked lines
-    const search_locked_lines_regexp = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm
+    const search_locked_lines_regexp = /🔒.*(\n^[\+|\-].*)|^[\+|\-].*🔒/gm
     const search_res = pr_diff_body.data.match(search_locked_lines_regexp)
     console.log(`Search result: ${search_res}`)
     if (pr_diff_body.data.match(search_locked_lines_regexp)) {
       console.log(`if condition for locks triggered`)  // DEBUG
       CUSTOM_REVIEW_REQUIRED = true
+      approval_groups.push({name: 'LOCKS', min_approvals: 2, users: [], teams: ['s737team']})
+      console.log(approval_groups)
       status_messages.push()
     }
 

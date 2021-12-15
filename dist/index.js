@@ -81,6 +81,8 @@ function run() {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            const approval_groups = [];
+            // const approval_groups: string[] = []
             const context = github.context;
             if (context.eventName !== 'pull_request' &&
                 context.eventName !== 'pull_request_review') {
@@ -112,12 +114,14 @@ function run() {
             var CUSTOM_REVIEW_REQUIRED = false;
             const status_messages = [];
             // condition to search files with changes to locked lines
-            const search_locked_lines_regexp = /🔒.*(\n^[\+|\-].*){1,5}|^[\+|\-].*🔒/gm;
+            const search_locked_lines_regexp = /🔒.*(\n^[\+|\-].*)|^[\+|\-].*🔒/gm;
             const search_res = pr_diff_body.data.match(search_locked_lines_regexp);
             console.log(`Search result: ${search_res}`);
             if (pr_diff_body.data.match(search_locked_lines_regexp)) {
                 console.log(`if condition for locks triggered`); // DEBUG
                 CUSTOM_REVIEW_REQUIRED = true;
+                approval_groups.push({ name: 'LOCKS', min_approvals: 2, users: [], teams: ['s737team'] });
+                console.log(approval_groups);
                 status_messages.push();
             }
             // Read values from config file if it exists
