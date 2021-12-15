@@ -110,7 +110,7 @@ async function run(): Promise<void> {
       CUSTOM_REVIEW_REQUIRED = true
       final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team'] })
       console.log(final_approval_groups)
-      status_messages.push(`🔒LOCKS TOUCHED🔒 review required`)
+      status_messages.push(`LOCKS TOUCHED review required`)
     }
 
 
@@ -187,6 +187,7 @@ async function run(): Promise<void> {
     if (context.eventName == 'pull_request') {
       console.log(`I'm going to request someones approval!!!`) //DEBUG
       assignReviewers(octokit, Array.from(reviewer_users_set), Array.from(reviewer_teams_set), pr_number)
+      console.log(status_messages.join())
 
       octokit.rest.repos.createCommitStatus({
         ...context.repo,
