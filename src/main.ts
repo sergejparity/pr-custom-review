@@ -187,7 +187,7 @@ async function run(): Promise<void> {
     if (context.eventName == 'pull_request') {
       console.log(`I'm going to request someones approval!!!`) //DEBUG
       assignReviewers(octokit, Array.from(reviewer_users_set), Array.from(reviewer_teams_set), pr_number)
-      console.log(status_messages.join())
+      console.log(`STATUS MESSAGES: ${status_messages.join()}`)
 
       octokit.rest.repos.createCommitStatus({
         ...context.repo,
