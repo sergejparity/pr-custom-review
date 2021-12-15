@@ -128,10 +128,14 @@ async function run(): Promise<void> {
       console.log(approval_group.users)  //DEBUG
       console.log(approval_group.teams)  //DEBUG
       const conditionEtalon: RegExp = /👜.*(\n^[\+|\-].*)|^[\+|\-].*👜/gm
+      const condString: string = '/👜.*(\n^[\+|\-].*)|^[\+|\-].*👜/gm'
+      const condFromString: RegExp = new RegExp(condString)
       const condition: RegExp = new RegExp(approval_group.condition)
       console.log(`cond_work: ${conditionEtalon}`)
-      console.log(`cond_bad: ${condition}`)
-      checkCondition(approval_group.check_type, condition, pr_diff_body, pr_files)
+      console.log(`cond_from_yml: ${condition}`)
+      console.log(`cond_string: ${condString}`)
+      console.log(`cond_from_string: ${condFromString}`)
+      checkCondition(approval_group.check_type, condFromString, pr_diff_body, pr_files)
     }
 
 

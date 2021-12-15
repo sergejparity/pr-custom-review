@@ -151,10 +151,14 @@ function run() {
                 console.log(approval_group.users); //DEBUG
                 console.log(approval_group.teams); //DEBUG
                 const conditionEtalon = /👜.*(\n^[\+|\-].*)|^[\+|\-].*👜/gm;
+                const condString = '/👜.*(\n^[\+|\-].*)|^[\+|\-].*👜/gm';
+                const condFromString = new RegExp(condString);
                 const condition = new RegExp(approval_group.condition);
                 console.log(`cond_work: ${conditionEtalon}`);
-                console.log(`cond_bad: ${condition}`);
-                checkCondition(approval_group.check_type, condition, pr_diff_body, pr_files);
+                console.log(`cond_from_yml: ${condition}`);
+                console.log(`cond_string: ${condString}`);
+                console.log(`cond_from_string: ${condFromString}`);
+                checkCondition(approval_group.check_type, condFromString, pr_diff_body, pr_files);
             }
             // No breaking changes - no cry. Set status OK and exit.
             // if (false) {
