@@ -133,6 +133,7 @@ function run() {
             console.log(`Search result: ${search_res}`); //DEBUG
             if (pr_diff_body.data.match(search_locked_lines_regexp)) {
                 console.log(`if condition for locks triggered`); //DEBUG
+                console.log(pr_diff_body.data.match(search_locked_lines_regexp));
                 CUSTOM_REVIEW_REQUIRED = true;
                 final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team'] });
                 console.log(final_approval_groups);
@@ -149,7 +150,8 @@ function run() {
                 console.log(approval_group.min_approvals); //DEBUG
                 console.log(approval_group.users); //DEBUG
                 console.log(approval_group.teams); //DEBUG
-                const condition = approval_group.condition;
+                const condition = /👜.*(\n^[\+|\-].*)|^[\+|\-].*👜/gm;
+                // const condition: RegExp = approval_group.condition
                 checkCondition(approval_group.check_type, condition, pr_diff_body, pr_files);
             }
             // No breaking changes - no cry. Set status OK and exit.
