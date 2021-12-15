@@ -88,12 +88,12 @@ async function run(): Promise<void> {
 
     // condition to search files with changes to locked lines
     const search_locked_lines_regexp = /🔒.*(\n^[\+|\-].*)|^[\+|\-].*🔒/gm
-    const search_res = pr_diff_body.data.match(search_locked_lines_regexp)
-    console.log(`Search result: ${search_res}`)
+    const search_res = pr_diff_body.data.match(search_locked_lines_regexp) //DEBUG
+    console.log(`Search result: ${search_res}`) //DEBUG
     if (pr_diff_body.data.match(search_locked_lines_regexp)) {
-      console.log(`if condition for locks triggered`)  // DEBUG
+      console.log(`if condition for locks triggered`)  //DEBUG
       CUSTOM_REVIEW_REQUIRED = true
-      approval_groups.push({name: 'LOCKS', min_approvals: 2, users: [], teams: ['s737team']})
+      approval_groups.push({name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team']})
       console.log(approval_groups)
       status_messages.push()
     }
@@ -104,6 +104,15 @@ async function run(): Promise<void> {
 
     // Parse contents of config file into variable
     const config_file_contents = YAML.parse(config_file)
+
+    for (const approval_group of config_file_contents.approval_groups) {
+      console.log(approval_group.name)
+      console.log(approval_group.condition)
+      console.log(approval_group.check_type)
+      console.log(approval_group.min_approvals)
+      console.log(approval_group.users)
+      console.log(approval_group.teams)
+    }
 
 
 
