@@ -174,16 +174,16 @@ function run() {
             console.log("Before users evaluation"); //DEBUG
             const reviewer_users_set = new Set();
             const reviewer_teams_set = new Set();
-            for (const reviewers of config_file_contents.approvals.groups) {
-                if (reviewers.from.users) {
-                    for (var entry of reviewers.from.users) {
+            for (const reviewers of final_approval_groups) {
+                if (reviewers.users) {
+                    for (var entry of reviewers.users) {
                         if (entry != pr_owner) {
                             reviewer_users_set.add(entry);
                         }
                     }
                 }
-                if (reviewers.from.teams) {
-                    for (var entry of reviewers.from.teams) {
+                if (reviewers.teams) {
+                    for (var entry of reviewers.teams) {
                         reviewer_teams_set.add(entry);
                     }
                 }
