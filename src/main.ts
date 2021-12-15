@@ -9,8 +9,8 @@ import { Settings, ReviewGatekeeper } from './review_gatekeeper'
 export function checkCondition(check_type: string, condition: RegExp, pr_diff_body: any, pr_files: any): boolean {
   var condition_match: boolean = false
   console.log("Enter checkCondition func") //DEBUG
-  console.log(pr_files) //DEBUG
-  console.log(condition) //DEBUG
+  // console.log(pr_files) //DEBUG
+  console.log(`condition: ${condition}`) //DEBUG
   console.log(`check_cond: ${pr_diff_body.data.match(condition)}`) //DEBUG
   if (pr_diff_body.data.match(condition)) {
     console.log(`Condition ${condition} matched`)  //DEBUG
@@ -126,7 +126,8 @@ async function run(): Promise<void> {
       console.log(approval_group.min_approvals)  //DEBUG
       console.log(approval_group.users)  //DEBUG
       console.log(approval_group.teams)  //DEBUG
-      checkCondition(approval_group.check_type, approval_group.condition, pr_diff_body, pr_files)
+      const condition: RegExp = approval_group.condition
+      checkCondition(approval_group.check_type, condition, pr_diff_body, pr_files)
     }
 
 
