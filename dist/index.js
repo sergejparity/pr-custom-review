@@ -158,7 +158,7 @@ function run() {
                 console.log(`cond_from_yml: ${condition}`);
                 console.log(`cond_string: ${condString}`);
                 console.log(`cond_from_string: ${condFromString}`);
-                checkCondition(approval_group.check_type, condFromString, pr_diff_body, pr_files);
+                checkCondition(approval_group.check_type, conditionEtalon, pr_diff_body, pr_files);
             }
             // No breaking changes - no cry. Set status OK and exit.
             // if (false) {
