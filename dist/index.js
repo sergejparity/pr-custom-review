@@ -50,8 +50,8 @@ function checkCondition(check_type, condition, pr_diff_body, pr_files) {
     console.log(`check_cond: ${pr_diff_body.data.match(condition)}`); //DEBUG
     if (pr_diff_body.data.match(condition)) {
         console.log(`Condition ${condition} matched`); //DEBUG
-        console.log(pr_diff_body.data.match(condition));
-        console.log(`Condition ${condition} matched`); //DEBUG
+        // console.log(pr_diff_body.data.match(condition))
+        // console.log(`Condition ${condition} matched`)  //DEBUG
         condition_match = true;
     }
     return condition_match;
@@ -137,7 +137,7 @@ function run() {
                 CUSTOM_REVIEW_REQUIRED = true;
                 final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team'] });
                 console.log(final_approval_groups);
-                status_messages.push();
+                status_messages.push(`🔒LOCKS TOUCHED🔒 review required`);
             }
             // Read values from config file if it exists
             const config_file = fs.readFileSync(core.getInput('config-file'), 'utf8');
@@ -160,8 +160,8 @@ function run() {
                         users: approval_group.users,
                         teams: approval_group.teams
                     });
-                    console.log(final_approval_groups);
-                    status_messages.push();
+                    console.log(final_approval_groups); //DEBUG
+                    status_messages.push(`${approval_group.name} review required`);
                 }
             }
             // No breaking changes - no cry. Set status OK and exit.
@@ -196,7 +196,9 @@ function run() {
             if (context.eventName == 'pull_request') {
                 console.log(`I'm going to request someones approval!!!`); //DEBUG
                 assignReviewers(octokit, Array.from(reviewer_users_set), Array.from(reviewer_teams_set), pr_number);
-                octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'failure', context: workflow_name, target_url: workflow_url, description: `PR contains changes subject to special review. Review requested from: ${Array.from(reviewer_users_set)}` }));
+                octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'failure', context: workflow_name, target_url: workflow_url, 
+                    // description: `PR contains changes subject to special review. Review requested from: ${Array.from(reviewer_users_set)}`
+                    description: status_messages.join() }));
             }
             else {
                 console.log(`I don't care about requesting approvals! Will just check who already approved`);

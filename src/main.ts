@@ -14,8 +14,8 @@ export function checkCondition(check_type: string, condition: RegExp, pr_diff_bo
   console.log(`check_cond: ${pr_diff_body.data.match(condition)}`) //DEBUG
   if (pr_diff_body.data.match(condition)) {
     console.log(`Condition ${condition} matched`)  //DEBUG
-    console.log(pr_diff_body.data.match(condition))
-    console.log(`Condition ${condition} matched`)  //DEBUG
+    // console.log(pr_diff_body.data.match(condition))
+    // console.log(`Condition ${condition} matched`)  //DEBUG
     condition_match = true
   }
   return condition_match
@@ -110,7 +110,7 @@ async function run(): Promise<void> {
       CUSTOM_REVIEW_REQUIRED = true
       final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team'] })
       console.log(final_approval_groups)
-      status_messages.push()
+      status_messages.push(`🔒LOCKS TOUCHED🔒 review required`)
     }
 
 
@@ -137,8 +137,8 @@ async function run(): Promise<void> {
           users: approval_group.users,
           teams: approval_group.teams
         })
-        console.log(final_approval_groups)
-        status_messages.push()
+        console.log(final_approval_groups) //DEBUG
+        status_messages.push(`${approval_group.name} review required`)
       }
     }
 
@@ -194,7 +194,8 @@ async function run(): Promise<void> {
         state: 'failure',
         context: workflow_name,
         target_url: workflow_url,
-        description: `PR contains changes subject to special review. Review requested from: ${Array.from(reviewer_users_set)}`
+        // description: `PR contains changes subject to special review. Review requested from: ${Array.from(reviewer_users_set)}`
+        description: status_messages.join()
       })
     } else {
       console.log(`I don't care about requesting approvals! Will just check who already approved`)
