@@ -153,7 +153,7 @@ function run() {
                 const conditionEtalon = /👜.*(\n^[\+|\-].*)|^[\+|\-].*👜/gm;
                 const condString = '/👜.*(\n^[\+|\-].*)|^[\+|\-].*👜/gm';
                 const condFromString = new RegExp(condString);
-                const condition = new RegExp(approval_group.condition);
+                const condition = new RegExp(approval_group.condition, "gm");
                 console.log(`cond_work: ${conditionEtalon}`);
                 console.log(`cond_from_yml: ${condition}`);
                 console.log(`cond_string: ${condString}`);

@@ -130,7 +130,7 @@ async function run(): Promise<void> {
       const conditionEtalon: RegExp = /👜.*(\n^[\+|\-].*)|^[\+|\-].*👜/gm
       const condString: string = '/👜.*(\n^[\+|\-].*)|^[\+|\-].*👜/gm'
       const condFromString: RegExp = new RegExp(condString)
-      const condition: RegExp = new RegExp(approval_group.condition)
+      const condition: RegExp = new RegExp(approval_group.condition, "gm")
       console.log(`cond_work: ${conditionEtalon}`)
       console.log(`cond_from_yml: ${condition}`)
       console.log(`cond_string: ${condString}`)
