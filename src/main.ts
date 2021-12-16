@@ -277,7 +277,7 @@ async function run(): Promise<void> {
         if (has_approvals.size >= group.min_approvals) {
           has_all_needed_approvals.add('true')
           pr_review_status_messages.push(
-            `${group.name} has ${has_approvals.size} approvals`
+            `${group.name} has enough (${has_approvals.size}) approvals`
           )
         } else {
           has_all_needed_approvals.add('false')
