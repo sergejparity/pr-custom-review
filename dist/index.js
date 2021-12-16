@@ -261,18 +261,26 @@ function run() {
                 }
                 console.log(`Approved users: ${Array.from(approved_users)}`); //DEBUG
                 // check approvals
-                const has_all_needed_approvals = [];
+                const has_all_needed_approvals = new Set();
                 for (const group of final_approval_groups) {
                     console.log(`Approval check - min ${group.min_approvals} of ${group.approvers} --- has approvals of ${Array.from(approved_users)}`); //DEBUG
                     const group_approvers = new Set(group.approvers);
                     const has_approvals = new Set([...group_approvers].filter(x => approved_users.has(x)));
-                    console.log(`has_approvals ${has_approvals} - ${has_approvals.size}`);
+                    console.log(`has_approvals ${has_approvals} - ${has_approvals.size}`); //DEBUG
+                    if (has_approvals.size >= group.min_approvals) {
+                        has_all_needed_approvals.add('true');
+                        pr_review_status_messages.push(`${group.name} has ${has_approvals.size} approvals`);
+                    }
+                    else {
+                        has_all_needed_approvals.add('false');
+                        pr_review_status_messages.push(`${group.name} min ${group.min_approvals} reviewers should approve this PR (currently: ${has_approvals.size})`);
+                    }
                 }
                 // The workflow url can be obtained by combining several environment varialbes, as described below:
                 // https://docs.github.com/en/actions/reference/environment-variables#default-environment-variables
                 core.info(`Setting a status on commit (${sha})`);
-                octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state:  true ? 'success' : 0, context: workflow_name, target_url: workflow_url, description: pr_review_status_messages.join('\n') }));
-                if (true) {
+                octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: has_all_needed_approvals.has('false') ? 'failure' : 'success', context: workflow_name, target_url: workflow_url, description: pr_review_status_messages.join('\n') }));
+                if (has_all_needed_approvals.has('false')) {
                     core.setFailed(pr_review_status_messages.join('\n'));
                     return;
                 }
