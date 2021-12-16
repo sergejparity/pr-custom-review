@@ -22,8 +22,8 @@ export function checkCondition(check_type: string, condition: RegExp, pr_diff_bo
 
 export async function combineUsersTeams(client: any, context: Context, org: string, pr_owner: string, users: string[], teams: string[]): Promise<string[]> {
   const full_approvers_list: Set<string> = new Set()
-  console.log(`Users inside combine func: ${users}`) //DEBUG
-  if (users) {
+  console.log(`Users inside combine func: ${users} - ${users.length}`) //DEBUG
+  if (users.length) {
     for (const user of users) {
       if (pr_owner != user) {
         console.log(`user: ${user}`) //DEBUG
@@ -32,7 +32,7 @@ export async function combineUsersTeams(client: any, context: Context, org: stri
     }
   }
   console.log(`Teams inside combine func: ${teams} - ${teams.length}`) //DEBUG
-  if (teams) {
+  if (teams.length) {
     for (const team of teams) {
       console.log(team) //DEBUG
       const team_users_list = await client.rest.teams.listMembersInOrg({
