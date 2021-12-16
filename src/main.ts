@@ -144,7 +144,7 @@ async function run(): Promise<void> {
       console.log(pr_diff_body.data.match(search_locked_lines_regexp))  //DEBUG
       CUSTOM_REVIEW_REQUIRED = true
       var approvers: string[] = []
-      combineUsersTeams(octokit, context, organization, pr_owner, ['sergioko747','sergioko757'], ['s737team']).then(value => {
+      await combineUsersTeams(octokit, context, organization, pr_owner, ['sergioko747','sergioko757'], ['s737team']).then(value => {
         console.log(`value: ${value}`)
         approvers = value
       })

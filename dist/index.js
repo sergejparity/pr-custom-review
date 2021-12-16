@@ -167,7 +167,7 @@ function run() {
                 console.log(pr_diff_body.data.match(search_locked_lines_regexp)); //DEBUG
                 CUSTOM_REVIEW_REQUIRED = true;
                 var approvers = [];
-                combineUsersTeams(octokit, context, organization, pr_owner, ['sergioko747', 'sergioko757'], ['s737team']).then(value => {
+                yield combineUsersTeams(octokit, context, organization, pr_owner, ['sergioko747', 'sergioko757'], ['s737team']).then(value => {
                     console.log(`value: ${value}`);
                     approvers = value;
                 });
