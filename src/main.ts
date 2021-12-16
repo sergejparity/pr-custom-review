@@ -42,7 +42,7 @@ export async function combineUsersTeams(client: any, context: Context, org: stri
         team_slug: team
       })
 
-      console.log(`Team users list: ${team_users_list.data}`)
+      console.log(`Team users list: ${team_users_list.data}`) //DEBUG
       for (const member of team_users_list.data) {
         if (pr_owner != member!.login) {
           console.log(`team_member: ${member!.login!}`) //DEBUG
@@ -51,7 +51,7 @@ export async function combineUsersTeams(client: any, context: Context, org: stri
       }
     }
   }
-  console.log(`Resulting full_approvers_list: ${full_approvers_list}`)
+  console.log(`Resulting full_approvers_list: ${full_approvers_list}`) //DEBUG
   return Array.from(full_approvers_list)
 }
 
@@ -181,33 +181,6 @@ async function run(): Promise<void> {
             console.log(`value: ${value}`)
             approvers = value
           })
-
-
-          // if (approval_group.users) {
-          //   for (const user of approval_group.users) {
-          //     if (pr_owner != user) {
-          //       console.log(`user: ${user}`) //DEBUG
-          //       full_approvers_list.add(user)
-          //     }
-          //   }
-          // }
-          // if (approval_group.teams) {
-          //   for (const team of approval_group.teams) {
-          //     console.log(team) //DEBUG
-          //     const team_users_list = await octokit.rest.teams.listMembersInOrg({
-          //       ...context.repo,
-          //       org: organization,
-          //       team_slug: team
-          //     });
-
-          //     for (const member of team_users_list.data) {
-          //       if (pr_owner != member!.login) {
-          //         console.log(`team_member: ${member!.login!}`) //DEBUG
-          //         full_approvers_list.add(member!.login)
-          //       }
-          //     }
-          //   }
-          // }
 
           final_approval_groups.push({
             name: approval_group.name,
