@@ -58,6 +58,7 @@ exports.checkCondition = checkCondition;
 function combineUsersTeams(client, context, org, pr_owner, users, teams) {
     return __awaiter(this, void 0, void 0, function* () {
         const full_approvers_list = new Set();
+        console.log(`Users inside combine func: ${users}`); //DEBUG
         if (users) {
             for (const user of users) {
                 if (pr_owner != user) {
@@ -66,6 +67,7 @@ function combineUsersTeams(client, context, org, pr_owner, users, teams) {
                 }
             }
         }
+        console.log(`Teams inside combine func: ${teams}`); //DEBUG
         if (teams) {
             for (const team of teams) {
                 console.log(team); //DEBUG
