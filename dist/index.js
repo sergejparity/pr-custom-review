@@ -67,7 +67,7 @@ function combineUsersTeams(client, context, org, pr_owner, users, teams) {
                 }
             }
         }
-        console.log(`Teams inside combine func: ${teams}`); //DEBUG
+        console.log(`Teams inside combine func: ${teams} - ${teams.length}`); //DEBUG
         if (teams) {
             for (const team of teams) {
                 console.log(team); //DEBUG

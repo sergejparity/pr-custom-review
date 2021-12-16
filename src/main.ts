@@ -31,7 +31,7 @@ export async function combineUsersTeams(client: any, context: Context, org: stri
       }
     }
   }
-  console.log(`Teams inside combine func: ${teams}`) //DEBUG
+  console.log(`Teams inside combine func: ${teams} - ${teams.length}`) //DEBUG
   if (teams) {
     for (const team of teams) {
       console.log(team) //DEBUG
