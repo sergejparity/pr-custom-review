@@ -265,12 +265,12 @@ async function run(): Promise<void> {
           console.log(`Other state: ${review.user!.login} --- ${review.state}`) //DEBUG
         }
       }
-      console.log(`Approved users: ${approved_users}`)  //DEBUG
+      console.log(`Approved users: ${Array.from(approved_users)}`)  //DEBUG
 
       // check approvals
       const has_all_needed_approvals: string[] = []
       for(const group of final_approval_groups) {
-        console.log(`Approval check: ${group}`) //DEBUG
+        console.log(`Approval check - min ${group.min_approvals} of ${group.approvers} --- has approvals of ${Array.from(approved_users)}`) //DEBUG
       }
 
       // The workflow url can be obtained by combining several environment varialbes, as described below:
