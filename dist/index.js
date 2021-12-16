@@ -141,17 +141,14 @@ function run() {
                 return;
             }
             const payload = context.payload;
-            const token = core.getInput('token');
-            const octokit = github.getOctokit(token);
-            const repo = payload.repository.url;
+            const octokit = github.getOctokit(core.getInput('token'));
             const pr_number = payload.pull_request.number;
-            const pr_diff_url = payload.pull_request.diff_url;
             const pr_owner = payload.pull_request.user.login;
             const sha = payload.pull_request.head.sha;
-            const workflow_name = `${process.env.GITHUB_WORKFLOW}`;
+            const workflow_name = process.env.GITHUB_WORKFLOW;
             const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`;
             const organization = (_a = process.env.GITHUB_REPOSITORY) === null || _a === void 0 ? void 0 : _a.split("/")[0];
-            const pr_diff_body = yield octokit.request(pr_diff_url);
+            const pr_diff_body = yield octokit.request(payload.pull_request.diff_url);
             const pr_files = yield octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}/files', {
                 owner: payload.repository.owner.login,
                 repo: payload.repository.name,
@@ -249,8 +246,9 @@ function run() {
             }
             console.log(`users set: ${Array.from(reviewer_users_set)}`); //DEBUG
             console.log(`teams set: ${Array.from(reviewer_teams_set)}`); //DEBUG
+            // if event pull_request, will request reviews and set check status 'failure'
             if (context.eventName == 'pull_request') {
-                console.log(`I'm going to request someones approval!!!`); //DEBUG
+                console.log(`I'm going to request needed approvals!!!`); //DEBUG
                 assignReviewers(octokit, Array.from(reviewer_users_set), Array.from(reviewer_teams_set), pr_number);
                 console.log(`STATUS MESSAGES: ${pr_status_messages.join()}`); //DEBUG
                 octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'failure', context: workflow_name, target_url: workflow_url, description: pr_status_messages.join('\n') }));
@@ -258,16 +256,16 @@ function run() {
             else {
                 console.log(`I don't care about requesting approvals! Will just check who already approved`);
                 //retrieve approvals
-                const reviews = yield octokit.rest.pulls.listReviews(Object.assign(Object.assign({}, context.repo), { pull_number: payload.pull_request.number }));
+                const reviews = yield octokit.rest.pulls.listReviews(Object.assign(Object.assign({}, context.repo), { pull_number: pr_number }));
                 const approved_users = new Set();
                 for (const review of reviews.data) {
                     if (review.state === `APPROVED`) {
                         approved_users.add(review.user.login);
-                        console.log(`Approved: ${review.user.login} --- ${review.state}`); //DEBUG
+                        console.log(`${review.state} - ${review.user.login}`); //DEBUG
                     }
                     else {
                         approved_users.delete(review.user.login);
-                        console.log(`Other state: ${review.user.login} --- ${review.state}`); //DEBUG
+                        console.log(`${review.state} - ${review.user.login}`); //DEBUG
                     }
                 }
                 console.log(`Approved users: ${Array.from(approved_users)}`); //DEBUG
@@ -280,11 +278,11 @@ function run() {
                     console.log(`has_approvals ${has_approvals} - ${has_approvals.size}`); //DEBUG
                     if (has_approvals.size >= group.min_approvals) {
                         has_all_needed_approvals.add('true');
-                        pr_review_status_messages.push(`${group.name} has enough (${has_approvals.size}) approvals`);
+                        pr_review_status_messages.push(`${group.name} (${has_approvals.size}/${group.min_approvals})- OK!`);
                     }
                     else {
                         has_all_needed_approvals.add('false');
-                        pr_review_status_messages.push(`${group.name} min ${group.min_approvals} reviewers should approve this PR (currently: ${has_approvals.size})`);
+                        pr_review_status_messages.push(`${group.name} (${has_approvals.size}/${group.min_approvals})`);
                     }
                 }
                 // The workflow url can be obtained by combining several environment varialbes, as described below:
