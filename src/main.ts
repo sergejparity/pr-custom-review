@@ -3,8 +3,6 @@ import * as github from '@actions/github'
 import * as Webhooks from '@octokit/webhooks-types'
 import * as fs from 'fs'
 import * as YAML from 'yaml'
-import { EOL } from 'os'
-import { Settings, ReviewGatekeeper } from './review_gatekeeper'
 import { Context } from '@actions/github/lib/context'
 
 export function checkCondition(check_type: string, condition: RegExp, pr_diff_body: any, pr_files: any): boolean {
