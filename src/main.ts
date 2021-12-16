@@ -39,6 +39,7 @@ export async function combineUsersTeams(client: any, context: Context, org: stri
         team_slug: team
       });
 
+      console.log(`Team users list: ${team_users_list.data}`)
       for (const member of team_users_list.data) {
         if (pr_owner != member!.login) {
           console.log(`team_member: ${member!.login!}`) //DEBUG
@@ -141,6 +142,7 @@ async function run(): Promise<void> {
       var approvers: string[] = []
       combineUsersTeams(octokit, context, organization, pr_owner, [], ['s737team']).then(res =>
         approvers = res)
+      console.log(`Approvers: ${approvers}`)
       final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team'], approvers: approvers })
       console.log(final_approval_groups)  //DEBUG
       pr_status_messages.push(`LOCKS TOUCHED review required`)

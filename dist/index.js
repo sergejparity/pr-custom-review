@@ -70,6 +70,7 @@ function combineUsersTeams(client, context, org, pr_owner, users, teams) {
             for (const team of teams) {
                 console.log(team); //DEBUG
                 const team_users_list = yield client.rest.teams.listMembersInOrg(Object.assign(Object.assign({}, context.repo), { org: org, team_slug: team }));
+                console.log(`Team users list: ${team_users_list.data}`);
                 for (const member of team_users_list.data) {
                     if (pr_owner != member.login) {
                         console.log(`team_member: ${member.login}`); //DEBUG
@@ -163,6 +164,7 @@ function run() {
                 CUSTOM_REVIEW_REQUIRED = true;
                 var approvers = [];
                 combineUsersTeams(octokit, context, organization, pr_owner, [], ['s737team']).then(res => approvers = res);
+                console.log(`Approvers: ${approvers}`);
                 final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team'], approvers: approvers });
                 console.log(final_approval_groups); //DEBUG
                 pr_status_messages.push(`LOCKS TOUCHED review required`);
