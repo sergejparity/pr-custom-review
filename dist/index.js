@@ -167,12 +167,12 @@ function run() {
                 console.log(pr_diff_body.data.match(search_locked_lines_regexp)); //DEBUG
                 CUSTOM_REVIEW_REQUIRED = true;
                 var approvers = [];
-                yield combineUsersTeams(octokit, context, organization, pr_owner, ['sergioko747', 'sergioko757'], ['s737team']).then(value => {
+                yield combineUsersTeams(octokit, context, organization, pr_owner, [], ['s737team']).then(value => {
                     console.log(`value: ${value}`);
                     approvers = value;
                 });
                 console.log(`Approvers: ${approvers}`);
-                final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: ['sergioko747'], teams: ['s737team'], approvers: approvers });
+                final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team'], approvers: approvers });
                 console.log(final_approval_groups); //DEBUG
                 pr_status_messages.push(`LOCKS TOUCHED review required`);
             }
