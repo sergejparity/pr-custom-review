@@ -5,15 +5,24 @@ import * as fs from 'fs'
 import * as YAML from 'yaml'
 import { Context } from '@actions/github/lib/context'
 
-export function checkCondition(check_type: string, condition: RegExp, pr_diff_body: any, pr_files: any): boolean {
+export function checkCondition(check_type: string, condition: RegExp, pr_diff_body: any, pr_files_list: Set<string>): boolean {
   var condition_match: boolean = false
   // TODO implement file lists evaluation
   console.log("Enter checkCondition func") //DEBUG
   console.log(`condition: ${condition}`) //DEBUG
   console.log(`check_cond: ${pr_diff_body.data.match(condition)}`) //DEBUG
-  if (pr_diff_body.data.match(condition)) {
-    console.log(`Condition ${condition} matched`)  //DEBUG
-    condition_match = true
+  if (check_type == 'pr_diff') {
+    if (pr_diff_body.data.match(condition)) {
+      console.log(`Condition ${condition} matched`)  //DEBUG
+      condition_match = true
+    }
+  }
+  if (check_type == 'pr_files') {
+    for (const item of pr_files_list) {
+      if(item.match(condition)){
+        condition_match = true
+      }
+    }
   }
   return condition_match
 }
@@ -123,9 +132,11 @@ async function run(): Promise<void> {
       pull_number: pr_number
     })
     // TODO retrieve pr files list
+    const pr_files_list: Set<string> = new Set()
     for (var i = 0; i < pr_files.data.length; i++) {
       var obj = pr_files.data[i]
-      console.log(obj.filename)
+      console.log(obj.filename) //DEBUG
+      pr_files_list.add(obj.filename)
     }
 
     var CUSTOM_REVIEW_REQUIRED: boolean = false
@@ -168,7 +179,7 @@ async function run(): Promise<void> {
         console.log(approval_group.teams)  //DEBUG
         const condition: RegExp = new RegExp(approval_group.condition, "gm")
         console.log(`cond_from_yml: ${condition}`) //DEBUG
-        if (checkCondition(approval_group.check_type, condition, pr_diff_body, pr_files)) {
+        if (checkCondition(approval_group.check_type, condition, pr_diff_body, pr_files_list)) {
           CUSTOM_REVIEW_REQUIRED = true
           // Combine users and team members in `approvers` list, excluding pr_owner
           console.log("Combine users and team members in `approvers` list, excluding pr_owner") //DEBUG
@@ -294,7 +305,7 @@ async function run(): Promise<void> {
       octokit.rest.repos.createCommitStatus({
         ...context.repo,
         sha,
-        state: has_all_needed_approvals.has('false') ?  'failure' :'success',
+        state: has_all_needed_approvals.has('false') ? 'failure' : 'success',
         context: workflow_name,
         target_url: workflow_url,
         description: pr_review_status_messages.join('\n')
