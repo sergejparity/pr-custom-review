@@ -67,7 +67,7 @@ function combineUsersTeams(client, context, org, pr_owner, users, teams) {
                 }
             }
         }
-        console.log(`Teams inside combine func: ${teams} - ${teams.length}`); //DEBUG
+        console.log(`Teams inside combine func: ${teams} - ${teams.length} - org: ${org}`); //DEBUG
         if (true) {
             console.log(`Get inside if`); //DEBUG
             for (const team of teams) {
@@ -167,7 +167,7 @@ function run() {
                 console.log(pr_diff_body.data.match(search_locked_lines_regexp)); //DEBUG
                 CUSTOM_REVIEW_REQUIRED = true;
                 var approvers = [];
-                combineUsersTeams(octokit, context, organization, pr_owner, [], ['s737team']).then(res => approvers = res);
+                combineUsersTeams(octokit, context, organization, pr_owner, ['sergioko747', 'sergioko757'], ['s737team']).then(res => approvers = res);
                 console.log(`Approvers: ${approvers}`);
                 final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: ['sergioko747'], teams: ['s737team'], approvers: approvers });
                 console.log(final_approval_groups); //DEBUG
