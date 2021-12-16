@@ -271,6 +271,10 @@ async function run(): Promise<void> {
       const has_all_needed_approvals: string[] = []
       for(const group of final_approval_groups) {
         console.log(`Approval check - min ${group.min_approvals} of ${group.approvers} --- has approvals of ${Array.from(approved_users)}`) //DEBUG
+        const group_approvers = new Set(group.approvers)
+        const has_approvals = new Set([...group_approvers].filter(x => approved_users.has(x)))
+        console.log(`has_approvals ${has_approvals} - ${has_approvals.size}`)
+
       }
 
       // The workflow url can be obtained by combining several environment varialbes, as described below:
