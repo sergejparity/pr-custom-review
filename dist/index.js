@@ -46,13 +46,10 @@ function checkCondition(check_type, condition, pr_diff_body, pr_files) {
     var condition_match = false;
     // TODO implement file lists evaluation
     console.log("Enter checkCondition func"); //DEBUG
-    // console.log(pr_files) //DEBUG
     console.log(`condition: ${condition}`); //DEBUG
     console.log(`check_cond: ${pr_diff_body.data.match(condition)}`); //DEBUG
     if (pr_diff_body.data.match(condition)) {
         console.log(`Condition ${condition} matched`); //DEBUG
-        // console.log(pr_diff_body.data.match(condition))
-        // console.log(`Condition ${condition} matched`)  //DEBUG
         condition_match = true;
     }
     return condition_match;
@@ -63,6 +60,8 @@ function assignReviewers(client, reviewer_users, reviewer_teams, pr_number) {
         try {
             console.log(`entering assignReviewers`); //DEBUG
             console.log(`users length: ${reviewer_users.length} - ${reviewer_users}`); //DEBUG
+            // You're safe to use default GITHUB_TOKEN until you request review only from users not teams
+            // It teams review is needed, then PAT token required
             if (reviewer_users) {
                 yield client.rest.pulls.requestReviewers({
                     owner: github.context.repo.owner,
@@ -72,9 +71,7 @@ function assignReviewers(client, reviewer_users, reviewer_teams, pr_number) {
                 });
                 core.info(`Requested review from users: ${reviewer_users}.`);
             }
-            console.log(`passed by users trying teams`); //DEBUG
-            console.log(`teams length: ${reviewer_teams}`); //DEBUG
-            // if default GITHUB_TOKEN used request below will fail
+            console.log(`teams length: ${reviewer_teams.length} - ${reviewer_teams}`); //DEBUG
             if (reviewer_teams) {
                 yield client.rest.pulls.requestReviewers({
                     owner: github.context.repo.owner,
@@ -136,38 +133,46 @@ function run() {
                 console.log(`if condition for locks triggered`); //DEBUG
                 console.log(pr_diff_body.data.match(search_locked_lines_regexp)); //DEBUG
                 CUSTOM_REVIEW_REQUIRED = true;
-                final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: undefined, teams: ['s737team'] });
+                final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team'] });
                 console.log(final_approval_groups); //DEBUG
                 status_messages.push(`LOCKS TOUCHED review required`);
             }
             // Read values from config file if it exists
-            const config_file = fs.readFileSync(core.getInput('config-file'), 'utf8');
-            // Parse contents of config file into variable
-            const config_file_contents = YAML.parse(config_file);
-            for (const approval_group of config_file_contents.approval_groups) {
-                console.log(approval_group.name); //DEBUG
-                console.log(approval_group.condition); //DEBUG
-                console.log(approval_group.check_type); //DEBUG
-                console.log(approval_group.min_approvals); //DEBUG
-                console.log(approval_group.users); //DEBUG
-                console.log(approval_group.teams); //DEBUG
-                const condition = new RegExp(approval_group.condition, "gm");
-                console.log(`cond_from_yml: ${condition}`);
-                if (checkCondition(approval_group.check_type, condition, pr_diff_body, pr_files)) {
-                    CUSTOM_REVIEW_REQUIRED = true;
-                    final_approval_groups.push({
-                        name: approval_group.name,
-                        min_approvals: approval_group.min_approvals,
-                        users: approval_group.users,
-                        teams: approval_group.teams
-                    });
-                    console.log(final_approval_groups); //DEBUG
-                    status_messages.push(`${approval_group.name} review required`);
+            // TODO exclude block if no config_file provided
+            var config_file_contents = "";
+            if (fs.existsSync(core.getInput('config-file'))) {
+                const config_file = fs.readFileSync(core.getInput('config-file'), 'utf8');
+                // Parse contents of config file into variable
+                config_file_contents = YAML.parse(config_file);
+                for (const approval_group of config_file_contents.approval_groups) {
+                    console.log(approval_group.name); //DEBUG
+                    console.log(approval_group.condition); //DEBUG
+                    console.log(approval_group.check_type); //DEBUG
+                    console.log(approval_group.min_approvals); //DEBUG
+                    console.log(approval_group.users); //DEBUG
+                    console.log(approval_group.teams); //DEBUG
+                    const condition = new RegExp(approval_group.condition, "gm");
+                    console.log(`cond_from_yml: ${condition}`); //DEBUG
+                    if (checkCondition(approval_group.check_type, condition, pr_diff_body, pr_files)) {
+                        CUSTOM_REVIEW_REQUIRED = true;
+                        final_approval_groups.push({
+                            name: approval_group.name,
+                            min_approvals: approval_group.min_approvals,
+                            users: approval_group.users,
+                            teams: approval_group.teams
+                        });
+                        console.log(final_approval_groups); //DEBUG
+                        status_messages.push(`${approval_group.name} review required`);
+                    }
                 }
             }
+            else {
+                console.log(`No config file provided. Continue with built in approval group`);
+            }
+            // TODO ^^^
             // No breaking changes - no cry. Set status OK and exit.
             if (!CUSTOM_REVIEW_REQUIRED) {
-                console.log(`Special approval of this PR is not required.`);
+                console.log(`Special approval of this PR is not required.`); //DEBUG
                 octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'success', context: workflow_name, target_url: workflow_url, description: "Special approval of this PR is not required." }));
                 return;
             }
@@ -188,11 +193,8 @@ function run() {
                     }
                 }
             }
-            console.log(`users set:`); //DEBUG
-            console.log(reviewer_users_set); //DEBUG
-            console.log(`teams set:`); //DEBUG
-            console.log(reviewer_teams_set); //DEBUG
-            console.log(Array.from(reviewer_users_set)); //DEBUG
+            console.log(`users set: ${Array.from(reviewer_users_set)}`); //DEBUG
+            console.log(`teams set: ${Array.from(reviewer_teams_set)}`); //DEBUG
             if (context.eventName == 'pull_request') {
                 console.log(`I'm going to request someones approval!!!`); //DEBUG
                 assignReviewers(octokit, Array.from(reviewer_users_set), Array.from(reviewer_teams_set), pr_number);
