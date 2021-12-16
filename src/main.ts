@@ -40,7 +40,7 @@ export async function combineUsersTeams(client: any, context: Context, org: stri
         ...context.repo,
         org: org,
         team_slug: team
-      });
+      })
 
       console.log(`Team users list: ${team_users_list.data}`)
       for (const member of team_users_list.data) {
