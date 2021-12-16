@@ -132,7 +132,7 @@ async function run(): Promise<void> {
 
     var CUSTOM_REVIEW_REQUIRED: boolean = false
     const pr_status_messages: string[] = []
-    const prr_status_messages: string[] = []
+    const pr_review_status_messages: string[] = []
 
 
     // condition to search files with changes to locked lines
@@ -249,30 +249,6 @@ async function run(): Promise<void> {
     } else {
       console.log(`I don't care about requesting approvals! Will just check who already approved`)
 
-      // aggregate reviewers from users and teams
-      console.log(`org: ${organization}`)
-
-      const teams_list = await octokit.rest.teams.list({
-        ...context.repo,
-        org: organization
-      });
-
-      for (const team of teams_list.data) {
-        console.log(`team list: ${team.slug}`)
-
-        const team_list_obj = await octokit.rest.teams.listMembersInOrg({
-          ...context.repo,
-          org: organization,
-          team_slug: team.slug
-        });
-
-        for (const member of team_list_obj.data) {
-          if (pr_owner != member!.login) {
-            console.log(`team_member: ${member!.login!}`) //DEBUG
-            reviewer_users_set.add(member!.login)
-          }
-        }
-      }
 
       //retrieve approvals
       const reviews = await octokit.rest.pulls.listReviews({
@@ -283,20 +259,19 @@ async function run(): Promise<void> {
       for (const review of reviews.data) {
         if (review.state === `APPROVED`) {
           approved_users.add(review.user!.login)
-          console.log(`Approved: ${review.user!.login} --- ${review.state}`)
+          console.log(`Approved: ${review.user!.login} --- ${review.state}`) //DEBUG
         } else {
           approved_users.delete(review.user!.login)
-          console.log(`Other state: ${review.user!.login} --- ${review.state}`)
+          console.log(`Other state: ${review.user!.login} --- ${review.state}`) //DEBUG
         }
       }
+      console.log(`Approved users: ${approved_users}`)  //DEBUG
 
       // check approvals
-      const review_gatekeeper = new ReviewGatekeeper(
-        config_file_contents as Settings,
-        Array.from(approved_users),
-        reviewer_users_set,
-        payload.pull_request.user.login
-      )
+      const has_all_needed_approvals: string[] = []
+      for(const group of final_approval_groups) {
+        console.log(`Approval check: ${group}`) //DEBUG
+      }
 
       // The workflow url can be obtained by combining several environment varialbes, as described below:
       // https://docs.github.com/en/actions/reference/environment-variables#default-environment-variables
@@ -306,16 +281,14 @@ async function run(): Promise<void> {
       octokit.rest.repos.createCommitStatus({
         ...context.repo,
         sha,
-        state: review_gatekeeper.satisfy() ? 'success' : 'failure',
+        state: true ? 'success' : 'failure',
         context: workflow_name,
         target_url: workflow_url,
-        description: review_gatekeeper.satisfy()
-          ? undefined
-          : review_gatekeeper.getMessages().join(' ')
+        description: pr_review_status_messages.join('\n')
       })
 
-      if (!review_gatekeeper.satisfy()) {
-        core.setFailed(review_gatekeeper.getMessages().join(EOL))
+      if (true) {
+        core.setFailed(pr_review_status_messages.join('\n'))
         return
       }
     }
