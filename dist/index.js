@@ -157,19 +157,23 @@ function run() {
                         // Combine users and team members in `approvers` list, excluding pr_owner
                         console.log("Combine users and team members in `approvers` list, excluding pr_owner"); //DEBUG
                         const full_approvers_list = new Set();
-                        for (const user of approval_group.users) {
-                            if (pr_owner != user) {
-                                console.log(`user: ${user}`); //DEBUG
-                                full_approvers_list.add(user);
+                        if (approval_group.users) {
+                            for (const user of approval_group.users) {
+                                if (pr_owner != user) {
+                                    console.log(`user: ${user}`); //DEBUG
+                                    full_approvers_list.add(user);
+                                }
                             }
                         }
-                        for (const team of approval_group.teams) {
-                            console.log(team); //DEBUG
-                            const team_users_list = yield octokit.rest.teams.listMembersInOrg(Object.assign(Object.assign({}, context.repo), { org: organization, team_slug: team }));
-                            for (const member of team_users_list.data) {
-                                if (pr_owner != member.login) {
-                                    console.log(`team_member: ${member.login}`); //DEBUG
-                                    full_approvers_list.add(member.login);
+                        if (approval_group.teams) {
+                            for (const team of approval_group.teams) {
+                                console.log(team); //DEBUG
+                                const team_users_list = yield octokit.rest.teams.listMembersInOrg(Object.assign(Object.assign({}, context.repo), { org: organization, team_slug: team }));
+                                for (const member of team_users_list.data) {
+                                    if (pr_owner != member.login) {
+                                        console.log(`team_member: ${member.login}`); //DEBUG
+                                        full_approvers_list.add(member.login);
+                                    }
                                 }
                             }
                         }
