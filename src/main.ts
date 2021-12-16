@@ -5,6 +5,7 @@ import * as fs from 'fs'
 import * as YAML from 'yaml'
 import { EOL } from 'os'
 import { Settings, ReviewGatekeeper } from './review_gatekeeper'
+import { Context } from '@actions/github/lib/context'
 
 export function checkCondition(check_type: string, condition: RegExp, pr_diff_body: any, pr_files: any): boolean {
   var condition_match: boolean = false
@@ -17,6 +18,36 @@ export function checkCondition(check_type: string, condition: RegExp, pr_diff_bo
     condition_match = true
   }
   return condition_match
+}
+
+export async function combineUsersTeams(client: any, context: Context, org: string, pr_owner: string, users: string[], teams: string[]): Promise<string[]> {
+  const full_approvers_list: Set<string> = new Set()
+  if (users) {
+    for (const user of users) {
+      if (pr_owner != user) {
+        console.log(`user: ${user}`) //DEBUG
+        full_approvers_list.add(user)
+      }
+    }
+  }
+  if (teams) {
+    for (const team of teams) {
+      console.log(team) //DEBUG
+      const team_users_list = await client.rest.teams.listMembersInOrg({
+        ...context.repo,
+        org: org,
+        team_slug: team
+      });
+
+      for (const member of team_users_list.data) {
+        if (pr_owner != member!.login) {
+          console.log(`team_member: ${member!.login!}`) //DEBUG
+          full_approvers_list.add(member!.login)
+        }
+      }
+    }
+  }
+  return Array.from(full_approvers_list)
 }
 
 export async function assignReviewers(client: any, reviewer_users: string[], reviewer_teams: string[], pr_number: number) {
@@ -107,7 +138,10 @@ async function run(): Promise<void> {
       console.log(`if condition for locks triggered`)  //DEBUG
       console.log(pr_diff_body.data.match(search_locked_lines_regexp))  //DEBUG
       CUSTOM_REVIEW_REQUIRED = true
-      final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team'], approvers: [] })
+      var approvers: string[] = []
+      combineUsersTeams(octokit, context, organization, pr_owner, [], ['s737team']).then(res =>
+        approvers = res)
+      final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team'], approvers: approvers })
       console.log(final_approval_groups)  //DEBUG
       pr_status_messages.push(`LOCKS TOUCHED review required`)
     }

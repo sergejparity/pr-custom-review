@@ -35,7 +35,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.assignReviewers = exports.checkCondition = void 0;
+exports.assignReviewers = exports.combineUsersTeams = exports.checkCondition = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const fs = __importStar(__nccwpck_require__(5747));
@@ -55,6 +55,33 @@ function checkCondition(check_type, condition, pr_diff_body, pr_files) {
     return condition_match;
 }
 exports.checkCondition = checkCondition;
+function combineUsersTeams(client, context, org, pr_owner, users, teams) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const full_approvers_list = new Set();
+        if (users) {
+            for (const user of users) {
+                if (pr_owner != user) {
+                    console.log(`user: ${user}`); //DEBUG
+                    full_approvers_list.add(user);
+                }
+            }
+        }
+        if (teams) {
+            for (const team of teams) {
+                console.log(team); //DEBUG
+                const team_users_list = yield client.rest.teams.listMembersInOrg(Object.assign(Object.assign({}, context.repo), { org: org, team_slug: team }));
+                for (const member of team_users_list.data) {
+                    if (pr_owner != member.login) {
+                        console.log(`team_member: ${member.login}`); //DEBUG
+                        full_approvers_list.add(member.login);
+                    }
+                }
+            }
+        }
+        return Array.from(full_approvers_list);
+    });
+}
+exports.combineUsersTeams = combineUsersTeams;
 function assignReviewers(client, reviewer_users, reviewer_teams, pr_number) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -134,7 +161,9 @@ function run() {
                 console.log(`if condition for locks triggered`); //DEBUG
                 console.log(pr_diff_body.data.match(search_locked_lines_regexp)); //DEBUG
                 CUSTOM_REVIEW_REQUIRED = true;
-                final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team'], approvers: [] });
+                var approvers = [];
+                combineUsersTeams(octokit, context, organization, pr_owner, [], ['s737team']).then(res => approvers = res);
+                final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team'], approvers: approvers });
                 console.log(final_approval_groups); //DEBUG
                 pr_status_messages.push(`LOCKS TOUCHED review required`);
             }
