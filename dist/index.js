@@ -170,7 +170,7 @@ function run() {
                     approvers = value;
                 });
                 console.log(`Approvers: ${approvers}`);
-                final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team'], approvers: approvers });
+                final_approval_groups.push({ name: 'LOCKS TOUCHED', min_approvals: 2, users: [], teams: ['s737team'], approvers: approvers });
                 console.log(final_approval_groups); //DEBUG
                 pr_status_messages.push(`LOCKS TOUCHED review required`);
             }
