@@ -194,33 +194,42 @@ function run() {
                         CUSTOM_REVIEW_REQUIRED = true;
                         // Combine users and team members in `approvers` list, excluding pr_owner
                         console.log("Combine users and team members in `approvers` list, excluding pr_owner"); //DEBUG
-                        const full_approvers_list = new Set();
-                        if (approval_group.users) {
-                            for (const user of approval_group.users) {
-                                if (pr_owner != user) {
-                                    console.log(`user: ${user}`); //DEBUG
-                                    full_approvers_list.add(user);
-                                }
-                            }
-                        }
-                        if (approval_group.teams) {
-                            for (const team of approval_group.teams) {
-                                console.log(team); //DEBUG
-                                const team_users_list = yield octokit.rest.teams.listMembersInOrg(Object.assign(Object.assign({}, context.repo), { org: organization, team_slug: team }));
-                                for (const member of team_users_list.data) {
-                                    if (pr_owner != member.login) {
-                                        console.log(`team_member: ${member.login}`); //DEBUG
-                                        full_approvers_list.add(member.login);
-                                    }
-                                }
-                            }
-                        }
+                        // const full_approvers_list: Set<string> = new Set()
+                        var approvers = [];
+                        yield combineUsersTeams(octokit, context, organization, pr_owner, approval_group.users, approval_group.teams).then(value => {
+                            console.log(`value: ${value}`);
+                            approvers = value;
+                        });
+                        // if (approval_group.users) {
+                        //   for (const user of approval_group.users) {
+                        //     if (pr_owner != user) {
+                        //       console.log(`user: ${user}`) //DEBUG
+                        //       full_approvers_list.add(user)
+                        //     }
+                        //   }
+                        // }
+                        // if (approval_group.teams) {
+                        //   for (const team of approval_group.teams) {
+                        //     console.log(team) //DEBUG
+                        //     const team_users_list = await octokit.rest.teams.listMembersInOrg({
+                        //       ...context.repo,
+                        //       org: organization,
+                        //       team_slug: team
+                        //     });
+                        //     for (const member of team_users_list.data) {
+                        //       if (pr_owner != member!.login) {
+                        //         console.log(`team_member: ${member!.login!}`) //DEBUG
+                        //         full_approvers_list.add(member!.login)
+                        //       }
+                        //     }
+                        //   }
+                        // }
                         final_approval_groups.push({
                             name: approval_group.name,
                             min_approvals: approval_group.min_approvals,
                             users: approval_group.users,
                             teams: approval_group.teams,
-                            approvers: Array.from(full_approvers_list)
+                            approvers: approvers
                         });
                         console.log(final_approval_groups); //DEBUG
                         pr_status_messages.push(`${approval_group.name} review required`);
