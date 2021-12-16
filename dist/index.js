@@ -124,7 +124,8 @@ function run() {
                 console.log(obj.filename);
             }
             var CUSTOM_REVIEW_REQUIRED = false;
-            const status_messages = [];
+            const pr_status_messages = [];
+            const prr_status_messages = [];
             // condition to search files with changes to locked lines
             const search_locked_lines_regexp = /🔒.*(\n^[\+|\-].*)|^[\+|\-].*🔒/gm;
             const search_res = pr_diff_body.data.match(search_locked_lines_regexp); //DEBUG
@@ -133,16 +134,14 @@ function run() {
                 console.log(`if condition for locks triggered`); //DEBUG
                 console.log(pr_diff_body.data.match(search_locked_lines_regexp)); //DEBUG
                 CUSTOM_REVIEW_REQUIRED = true;
-                final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team'] });
+                final_approval_groups.push({ name: '🔒LOCKS TOUCHED🔒', min_approvals: 2, users: [], teams: ['s737team'], approvers: [] });
                 console.log(final_approval_groups); //DEBUG
-                status_messages.push(`LOCKS TOUCHED review required`);
+                pr_status_messages.push(`LOCKS TOUCHED review required`);
             }
             // Read values from config file if it exists
-            // TODO exclude block if no config_file provided
             var config_file_contents = "";
             if (fs.existsSync(core.getInput('config-file'))) {
                 const config_file = fs.readFileSync(core.getInput('config-file'), 'utf8');
-                // Parse contents of config file into variable
                 config_file_contents = YAML.parse(config_file);
                 for (const approval_group of config_file_contents.approval_groups) {
                     console.log(approval_group.name); //DEBUG
@@ -155,28 +154,47 @@ function run() {
                     console.log(`cond_from_yml: ${condition}`); //DEBUG
                     if (checkCondition(approval_group.check_type, condition, pr_diff_body, pr_files)) {
                         CUSTOM_REVIEW_REQUIRED = true;
+                        // Combine users and team members in `approvers` list, excluding pr_owner
+                        console.log("Combine users and team members in `approvers` list, excluding pr_owner"); //DEBUG
+                        const full_approvers_list = new Set();
+                        for (const user of approval_group.users) {
+                            if (pr_owner != user) {
+                                console.log(`user: ${user}`); //DEBUG
+                                full_approvers_list.add(user);
+                            }
+                        }
+                        for (const team of approval_group.teams) {
+                            console.log(team); //DEBUG
+                            const team_users_list = yield octokit.rest.teams.listMembersInOrg(Object.assign(Object.assign({}, context.repo), { org: organization, team_slug: team }));
+                            for (const member of team_users_list.data) {
+                                if (pr_owner != member.login) {
+                                    console.log(`team_member: ${member.login}`); //DEBUG
+                                    full_approvers_list.add(member.login);
+                                }
+                            }
+                        }
                         final_approval_groups.push({
                             name: approval_group.name,
                             min_approvals: approval_group.min_approvals,
                             users: approval_group.users,
-                            teams: approval_group.teams
+                            teams: approval_group.teams,
+                            approvers: Array.from(full_approvers_list)
                         });
                         console.log(final_approval_groups); //DEBUG
-                        status_messages.push(`${approval_group.name} review required`);
+                        pr_status_messages.push(`${approval_group.name} review required`);
                     }
                 }
             }
             else {
                 console.log(`No config file provided. Continue with built in approval group`);
             }
-            // TODO ^^^
             // No breaking changes - no cry. Set status OK and exit.
             if (!CUSTOM_REVIEW_REQUIRED) {
                 console.log(`Special approval of this PR is not required.`); //DEBUG
                 octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'success', context: workflow_name, target_url: workflow_url, description: "Special approval of this PR is not required." }));
                 return;
             }
-            console.log("Before users evaluation"); //DEBUG
+            // Refine data for review request
             const reviewer_users_set = new Set();
             const reviewer_teams_set = new Set();
             for (const reviewers of final_approval_groups) {
@@ -198,8 +216,8 @@ function run() {
             if (context.eventName == 'pull_request') {
                 console.log(`I'm going to request someones approval!!!`); //DEBUG
                 assignReviewers(octokit, Array.from(reviewer_users_set), Array.from(reviewer_teams_set), pr_number);
-                console.log(`STATUS MESSAGES: ${status_messages.join()}`); //DEBUG
-                octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'failure', context: workflow_name, target_url: workflow_url, description: status_messages.join('\n') }));
+                console.log(`STATUS MESSAGES: ${pr_status_messages.join()}`); //DEBUG
+                octokit.rest.repos.createCommitStatus(Object.assign(Object.assign({}, context.repo), { sha, state: 'failure', context: workflow_name, target_url: workflow_url, description: pr_status_messages.join('\n') }));
             }
             else {
                 console.log(`I don't care about requesting approvals! Will just check who already approved`);
@@ -211,7 +229,7 @@ function run() {
                     const team_list_obj = yield octokit.rest.teams.listMembersInOrg(Object.assign(Object.assign({}, context.repo), { org: organization, team_slug: team.slug }));
                     for (const member of team_list_obj.data) {
                         if (pr_owner != member.login) {
-                            console.log(`team_member: ${member.login}`); //debug output
+                            console.log(`team_member: ${member.login}`); //DEBUG
                             reviewer_users_set.add(member.login);
                         }
                     }
