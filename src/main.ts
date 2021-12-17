@@ -150,7 +150,6 @@ async function run(): Promise<void> {
       CUSTOM_REVIEW_REQUIRED = true
       var approvers: string[] = []
       await combineUsersTeams(octokit, context, organization, pr_owner, [], ['s737team']).then(value => {
-        console.log(`value: ${value}`)
         approvers = value
       })
       final_approval_groups.push({ name: 'LOCKS TOUCHED', min_approvals: 2, users: [], teams: ['s737team'], approvers: approvers })
@@ -184,7 +183,8 @@ async function run(): Promise<void> {
             teams: approval_group.teams,
             approvers: approvers
           })
-          console.log(`###### APPROVAL GROUPS ######\n${final_approval_groups}`) //DEBUG
+          console.log(`###### APPROVAL GROUPS ######`) //DEBUG
+          console.log(final_approval_groups)
           pr_status_messages.push(`${approval_group.name} review required`)
         }
       }
