@@ -203,7 +203,7 @@ function run() {
                             teams: approval_group.teams,
                             approvers: approvers
                         });
-                        console.log(`###### APPROVAL GROUPS ######\n${Array.from(final_approval_groups)}`); //DEBUG
+                        console.log(`###### APPROVAL GROUPS ######\n${final_approval_groups}`); //DEBUG
                         pr_status_messages.push(`${approval_group.name} review required`);
                     }
                 }
