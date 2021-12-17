@@ -204,7 +204,7 @@ function run() {
                         });
                         console.log(`###### APPROVAL GROUPS ######`); //DEBUG
                         console.log(final_approval_groups);
-                        pr_status_messages.push(`${approval_group.name} review required`);
+                        pr_status_messages.push(`${approval_group.name} ${approval_group.min_approvals} review(s) required`);
                     }
                 }
             }

@@ -143,7 +143,7 @@ async function run(): Promise<void> {
 
 
     // Built in condition to search files with changes to locked lines
-    const search_locked_lines_regexp = /🔒.*(\n^[\+|\-].*)|^[\+|\-].*🔒/gm
+    const search_locked_lines_regexp: RegExp = /🔒.*(\n^[\+|\-].*)|^[\+|\-].*🔒/gm
     if (pr_diff_body.data.match(search_locked_lines_regexp)) {
       console.log(`###### TOUCHED LOCKS FOUND ######`)  //DEBUG
       console.log(pr_diff_body.data.match(search_locked_lines_regexp))  //DEBUG
@@ -185,7 +185,7 @@ async function run(): Promise<void> {
           })
           console.log(`###### APPROVAL GROUPS ######`) //DEBUG
           console.log(final_approval_groups)
-          pr_status_messages.push(`${approval_group.name} review required`)
+          pr_status_messages.push(`${approval_group.name} ${approval_group.min_approvals} review(s) required`)
         }
       }
     } else {

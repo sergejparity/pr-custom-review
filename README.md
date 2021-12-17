@@ -1,71 +1,89 @@
-# PR Custom Review
+# PR Custom Review (GiHub Action)
 
-This is an action created for for complex pull request approval cases that are not currently supported by the [protected branches](https://docs.github.com/en/github/administering-a-repository/defining-the-mergeability-of-pull-requests/about-protected-branches#about-branch-protection-settings) feature in GitHub.
+This is an action created for complex pull request approval scenarios that are not currently supported by the [protected branches](https://docs.github.com/en/github/administering-a-repository/defining-the-mergeability-of-pull-requests/about-protected-branches#about-branch-protection-settings) feature in GitHub. It might extend or even completely replace [Require pull request reviews before merging](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/about-protected-branches#require-pull-request-reviews-before-merging) setting
 
 ## How this action works
 
-This action is intended to be executed every time some change is made to the pull request (see [workflow example](#Workflow-config])). When this action is executed, it checks whether the review and approval status of the triggered pull request meets the policy described in the [action's config](#Action-config), and sets the result to a commit status named "PR Custom Review Status".
+Once setup, PR Custom Review action executed at events [pull_request](https://docs.github.com/en/actions/learn-github-actions/events-that-trigger-workflows#pull_request) and [pull_request_review](https://docs.github.com/en/actions/learn-github-actions/events-that-trigger-workflows#pull_request_review) (see [workflow config example](#Workflow-config])).
 
+When the action is triggered, it evaluates whether PR contains changes requiring special approval. Conditions for evaluation specified in action's [`config_file`](#Action-config) and currently supports two types of checks:
 
-You can enforce the review policy described in action config by setting this "PR Custom Review Status" as required in the protected branch settings.
+* `pr_diff` - examines PR diff content
+* `pr_files` - evaluates paths/files changed in PR
+
+If PR Custom Review action detects that one of the conditions returns positive result it will request PR review from users/teams specified in the [action's config](#Action-config) and sets status check as `failed` preventing PR from merge until specified approval reviews count is received.
+
+Then PR Custom Review action monitors `pull_request_review` events, evaluates received reviews and updates PR status checks accordingly.
+
+Review policy described in [action config](#Action-config) can be enforced by setting [status checks](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks) of PR's as required in the protected branch settings (see [GitHub repository configuration](#GitHub-repository-configuration)).
 
 ## Configuration
 
 ### Action config
 
-The action is configured via the `custom_approvers_config.yml` file located in the `.github` subdirectory. Default config file can be overriden in workflow inputs.
-The general format is as follows.
+Action has one built-in condition check which evaluates whether PR changes any line of code containing 🔒 emoji sign or line below it.
+
+Additional condition checks can be configured via the `pr-custom-review.yml` file placed in the `.github` subdirectory. Default config file can be overriden in workflow step [`with`](https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#jobsjob_idstepswith) section. [`config_file`](#Action-config) is optional and if it is missing than only built-in check will be performed.
+
+Config file format:
 
 ```yaml
-approvals:
-  # check will fail if there is no approval
-  minimum: 1     # optional - the same as repo protected branch settings
-  groups:
-    - name: reviewers_group1
-      minimum: 1 # number of needed approvals
-      from:
-        person: # list of individual users to request and check approvals. Works with default GITHUB_TOKEN
-          - user1
-          - user2
-    - name: reviewers_group2
-      minimum: 2
-      from:
-        person:
-          - user3
-          - user4
+approval_groups:
+  - name: CHECK NAME     # Used to create message in status check. Keep it short as description of status check has limit of 140 chars
+    condition: /^.*$/    # RegExp used to detect changes. Do not specify modifiers after closing slash. "gm" modifiers will be added
+    check_type: pr_diff  # Check type. Currently supported `pr_diff` and `pr_files`
+    min_approvals: 2     # minimum required approvals
+    users:               # GitHub users list to request review from
+      - user1
+      - user2
+    teams:               # GitHub teams list to request review from. Must be within repository organization, teams from external organizations are not supported. Specify team name(slug) only e.g 'team1' without org. 'org/team1' will lead to failure.
+      - team1
+      - team2
 ```
 
 ### Workflow config
 
-Once the `custom_approvers_config.yml` file is in place, add the action to execute on every PR and then set it as a required action to start enforcing your new approval policy!
-
 ```yaml
-name: 'PR Gatekeeper'
+name: PR Custom Review Status                     # used to create status check name
 
-on:
+on:                                               # Events which triggers action
   pull_request:
+    branches:
+      - main
+      - master
     types:
-      [
-        assigned,
-        unassigned,
-        opened,
-        reopened,
-        synchronize,
-        review_requested,
-        review_request_removed
-      ]
+      - opened
+      - reopened
+      - synchronize
+      - review_request_removed                    # in addition to default events (opened, reopened, synchronize)
   pull_request_review:
 
 jobs:
-  pr-gatekeeper:
-    name: PR Gatekeeper
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: sergejparity/pr-special-review@master
+      - name: checkout
+        uses: actions/checkout@v2                 # IMPORTANT! use this action as the first step
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # OPTIONAL config-file: './.github/approve_config.yml'
+          fetch-depth: 0
+      - name: pr-custom-review
+        uses: sergejparity/pr-custom-review@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}            # If it is needed to request reviews from teams, than token with permission to read organization is needed. Default one created by GitHub action will fail.
+          config-file: './.github/pr-custom-review.yml' #OPTIONAL: can be specified to override default config_file
 ```
-TODO
-Dismiss stale pull request approvals when new commits are pushed STATUS
+
+### GitHub repository configuration
+
+Although action will work even without any additional settings in GitHub repository.
+It is recommended to setup [Branch protection rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/managing-a-branch-protection-rule) as shown on the screenshot below:
+
+<details>
+<summary>Expand screenshot</summary>
+
+![Branch protection settings](./img/github-branch-protection.png)
+
+</details>
+
+### High level flow chart
+![High level flow chart](./img/pr-custom-review-flowchart.png)
