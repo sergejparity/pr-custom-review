@@ -5,7 +5,7 @@ import * as fs from 'fs'
 import * as YAML from 'yaml'
 import { Context } from '@actions/github/lib/context'
 
-export function checkCondition(check_type: string, condition: RegExp, pr_diff_body: any, pr_files_list: Set<string>): boolean {
+export async function checkCondition(check_type: string, condition: RegExp, pr_diff_body: any, pr_files_list: Set<string>): boolean {
   console.log(`###### BEGIN checkCondition ######`) //DEBUG
   var condition_match: boolean = false
   console.log(`condition: ${condition}`) //DEBUG
@@ -168,7 +168,7 @@ async function run(): Promise<void> {
         console.log(`approval_group: ${approval_group.name}`)  //DEBUG
         const condition: RegExp = new RegExp(approval_group.condition, "gm")
 
-        if (checkCondition(approval_group.check_type, condition, pr_diff_body, pr_files_list)) {
+        if (await checkCondition(approval_group.check_type, condition, pr_diff_body, pr_files_list)) {
           CUSTOM_REVIEW_REQUIRED = true
           // Combine users and team members in `approvers` list, excluding pr_owner
           var approvers: string[] = []
