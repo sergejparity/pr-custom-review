@@ -184,7 +184,7 @@ async function run(): Promise<void> {
             teams: approval_group.teams,
             approvers: approvers
           })
-          console.log(`###### APPROVAL GROUPS ######\n${final_approval_groups}`) //DEBUG
+          console.log(`###### APPROVAL GROUPS ######\n${Array.from(final_approval_groups)}`) //DEBUG
           pr_status_messages.push(`${approval_group.name} review required`)
         }
       }
@@ -262,7 +262,7 @@ async function run(): Promise<void> {
       console.log(`Approved users: ${Array.from(approved_users)}`)  //DEBUG
 
       // check approvals
-      console.log(`###### CHECKING APPROVALS ######`)
+      console.log(`###### CHECKING APPROVALS ######`) //DEBUG
       const has_all_needed_approvals: Set<string> = new Set()
 
       for (const group of final_approval_groups) {
