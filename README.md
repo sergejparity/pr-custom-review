@@ -67,7 +67,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: pr-custom-review
-        uses: sergejparity/pr-custom-review@master
+        uses: paritytech/pr-custom-review@master  # This action
         with:
           token: ${{ secrets.GITHUB_TOKEN }}            # If it is needed to request reviews from teams, than token with permission to read organization is needed. Default one created by GitHub action will fail.
           config-file: './.github/pr-custom-review.yml' #OPTIONAL: can be specified to override default config_file
