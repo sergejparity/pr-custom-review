@@ -137,7 +137,7 @@ async function run(): Promise<void> {
       var obj = pr_files.data[i]
       pr_files_list.add(obj.filename)
     }
-    console.log(`###### PR FILES LIST \n ${Array.from(pr_files_list).join('\n')}\n######`)
+    console.log(`###### PR FILES LIST ######\n ${Array.from(pr_files_list).join('\n')}\n######`)
 
     var CUSTOM_REVIEW_REQUIRED: boolean = false
     const pr_status_messages: string[] = []
@@ -146,10 +146,8 @@ async function run(): Promise<void> {
 
     // Built in condition to search files with changes to locked lines
     const search_locked_lines_regexp = /🔒.*(\n^[\+|\-].*)|^[\+|\-].*🔒/gm
-    const search_res = pr_diff_body.data.match(search_locked_lines_regexp) //DEBUG
-    console.log(`Search result: ${search_res}`) //DEBUG
     if (pr_diff_body.data.match(search_locked_lines_regexp)) {
-      console.log(`if condition for locks triggered`)  //DEBUG
+      console.log(`###### TOUCHED LOCKS FOUND ######`)  //DEBUG
       console.log(pr_diff_body.data.match(search_locked_lines_regexp))  //DEBUG
       CUSTOM_REVIEW_REQUIRED = true
       var approvers: string[] = []
@@ -157,14 +155,13 @@ async function run(): Promise<void> {
         console.log(`value: ${value}`)
         approvers = value
       })
-      console.log(`Approvers: ${approvers}`)
       final_approval_groups.push({ name: 'LOCKS TOUCHED', min_approvals: 2, users: [], teams: ['s737team'], approvers: approvers })
       console.log(final_approval_groups)  //DEBUG
       pr_status_messages.push(`LOCKS TOUCHED review required`)
     }
 
-
     // Read values from config file if it exists
+    console.log(`###### CONFIG FILE EVALUATION ######`) //DEBUG
     var config_file_contents: any = ""
     if (fs.existsSync(core.getInput('config-file'))) {
       const config_file = fs.readFileSync(core.getInput('config-file'), 'utf8')
@@ -182,9 +179,6 @@ async function run(): Promise<void> {
         if (checkCondition(approval_group.check_type, condition, pr_diff_body, pr_files_list)) {
           CUSTOM_REVIEW_REQUIRED = true
           // Combine users and team members in `approvers` list, excluding pr_owner
-          console.log("Combine users and team members in `approvers` list, excluding pr_owner") //DEBUG
-          // const full_approvers_list: Set<string> = new Set()
-
           var approvers: string[] = []
           await combineUsersTeams(octokit, context, organization, pr_owner, approval_group.users, approval_group.teams).then(value => {
             console.log(`value: ${value}`)
@@ -208,7 +202,7 @@ async function run(): Promise<void> {
 
     // No breaking changes - no cry. Set status OK and exit.
     if (!CUSTOM_REVIEW_REQUIRED) {
-      console.log(`Special approval of this PR is not required.`) //DEBUG
+      console.log(`###### Special approval of this PR is not required. ######`) //DEBUG
       octokit.rest.repos.createCommitStatus({
         ...context.repo,
         sha,
@@ -244,7 +238,7 @@ async function run(): Promise<void> {
 
     // if event pull_request, will request reviews and set check status 'failure'
     if (context.eventName == 'pull_request') {
-      console.log(`I'm going to request needed approvals!!!`) //DEBUG
+      console.log(`###### It's a PULL REQUEST event! I'm going to request needed approvals!!! ######`) //DEBUG
       assignReviewers(octokit, Array.from(reviewer_users_set), Array.from(reviewer_teams_set), pr_number)
       console.log(`STATUS MESSAGES: ${pr_status_messages.join()}`) //DEBUG
       octokit.rest.repos.createCommitStatus({
@@ -256,7 +250,7 @@ async function run(): Promise<void> {
         description: pr_status_messages.join('\n')
       })
     } else {
-      console.log(`I don't care about requesting approvals! Will just check who already approved`)
+      console.log(`###### It's a PULL REQUEST REVIEW event! I don't care about requesting approvals! Will just check who already approved`)
       //retrieve approvals
       const reviews = await octokit.rest.pulls.listReviews({
         ...context.repo,
