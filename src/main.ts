@@ -141,7 +141,7 @@ async function run(): Promise<void> {
     const pr_status_messages: string[] = []
     const pr_review_status_messages: string[] = []
 
-
+    console.log(`###### PR DIFF LIST ######\n ${pr_diff_body}\n######`)
     // Built in condition to search files with changes to locked lines
     const search_locked_lines_regexp: RegExp = /🔒.*(\n^[\+|\-].*)|^[\+|\-].*🔒/gm
     if (pr_diff_body.data.match(search_locked_lines_regexp)) {
