@@ -41,11 +41,9 @@ const github = __importStar(__nccwpck_require__(5438));
 const fs = __importStar(__nccwpck_require__(5747));
 const YAML = __importStar(__nccwpck_require__(3552));
 function checkCondition(check_type, condition, pr_diff_body, pr_files_list) {
+    console.log(`###### BEGIN checkCondition ######`); //DEBUG
     var condition_match = false;
-    // TODO implement file lists evaluation
-    console.log("Enter checkCondition func"); //DEBUG
     console.log(`condition: ${condition}`); //DEBUG
-    console.log(`check_cond: ${pr_diff_body.data.match(condition)}`); //DEBUG
     if (check_type == 'pr_diff') {
         if (pr_diff_body.data.match(condition)) {
             console.log(`Condition ${condition} matched`); //DEBUG
@@ -55,16 +53,19 @@ function checkCondition(check_type, condition, pr_diff_body, pr_files_list) {
     if (check_type == 'pr_files') {
         for (const item of pr_files_list) {
             if (item.match(condition)) {
+                console.log(`Condition ${condition} matched`); //DEBUG
                 condition_match = true;
             }
         }
     }
+    console.log(`###### END checkCondition ######`); //DEBUG
     return condition_match;
 }
 exports.checkCondition = checkCondition;
 function combineUsersTeams(client, context, org, pr_owner, users, teams) {
     return __awaiter(this, void 0, void 0, function* () {
         const full_approvers_list = new Set();
+        console.log(`###### BEGIN combineUsersTeams ######`); //DEBUG
         console.log(`Users inside combine func: ${users} - `); //DEBUG
         if (users) {
             for (const user of users) {
@@ -90,6 +91,7 @@ function combineUsersTeams(client, context, org, pr_owner, users, teams) {
             }
         }
         console.log(`Resulting full_approvers_list: ${full_approvers_list}`); //DEBUG
+        console.log(`###### END combineUsersTeams ######`); //DEBUG
         return Array.from(full_approvers_list);
     });
 }
@@ -97,10 +99,10 @@ exports.combineUsersTeams = combineUsersTeams;
 function assignReviewers(client, reviewer_users, reviewer_teams, pr_number) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            console.log(`entering assignReviewers`); //DEBUG
-            console.log(`users length: ${reviewer_users.length} - ${reviewer_users}`); //DEBUG
+            console.log(`###### BEGIN assignReviewers ######`); //DEBUG
+            console.log(`users: ${reviewer_users.length} - ${reviewer_users}`); //DEBUG
             // You're safe to use default GITHUB_TOKEN until you request review only from users not teams
-            // It teams review is needed, then PAT token required
+            // If teams review is needed, then PAT token required with permission to read org
             if (reviewer_users) {
                 yield client.rest.pulls.requestReviewers({
                     owner: github.context.repo.owner,
@@ -110,7 +112,7 @@ function assignReviewers(client, reviewer_users, reviewer_teams, pr_number) {
                 });
                 core.info(`Requested review from users: ${reviewer_users}.`);
             }
-            console.log(`teams length: ${reviewer_teams.length} - ${reviewer_teams}`); //DEBUG
+            console.log(`teams: ${reviewer_teams.length} - ${reviewer_teams}`); //DEBUG
             if (reviewer_teams) {
                 yield client.rest.pulls.requestReviewers({
                     owner: github.context.repo.owner,
@@ -120,18 +122,19 @@ function assignReviewers(client, reviewer_users, reviewer_teams, pr_number) {
                 });
                 core.info(`Requested review from teams: ${reviewer_teams}.`);
             }
-            console.log(`exiting assignReviewers`); //DEBUG
         }
         catch (error) {
             core.setFailed(error.message);
             console.log("error: ", error);
         }
+        console.log(`###### END assignReviewers ######`); //DEBUG
     });
 }
 exports.assignReviewers = assignReviewers;
 function run() {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
+        console.log(`###### BEGIN PR-CUSTOM-CHECK ACTION ######`);
         try {
             const final_approval_groups = [];
             const context = github.context;
@@ -154,17 +157,17 @@ function run() {
                 repo: payload.repository.name,
                 pull_number: pr_number
             });
-            // TODO retrieve pr files list
+            // Retrieve PR's changes files
             const pr_files_list = new Set();
             for (var i = 0; i < pr_files.data.length; i++) {
                 var obj = pr_files.data[i];
-                console.log(obj.filename); //DEBUG
                 pr_files_list.add(obj.filename);
             }
+            console.log(`###### PR FILES LIST \n ${Array.from(pr_files_list).join('\n')}\n######`);
             var CUSTOM_REVIEW_REQUIRED = false;
             const pr_status_messages = [];
             const pr_review_status_messages = [];
-            // condition to search files with changes to locked lines
+            // Built in condition to search files with changes to locked lines
             const search_locked_lines_regexp = /🔒.*(\n^[\+|\-].*)|^[\+|\-].*🔒/gm;
             const search_res = pr_diff_body.data.match(search_locked_lines_regexp); //DEBUG
             console.log(`Search result: ${search_res}`); //DEBUG

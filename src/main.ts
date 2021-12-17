@@ -6,11 +6,9 @@ import * as YAML from 'yaml'
 import { Context } from '@actions/github/lib/context'
 
 export function checkCondition(check_type: string, condition: RegExp, pr_diff_body: any, pr_files_list: Set<string>): boolean {
+  console.log(`###### BEGIN checkCondition ######`) //DEBUG
   var condition_match: boolean = false
-  // TODO implement file lists evaluation
-  console.log("Enter checkCondition func") //DEBUG
   console.log(`condition: ${condition}`) //DEBUG
-  console.log(`check_cond: ${pr_diff_body.data.match(condition)}`) //DEBUG
   if (check_type == 'pr_diff') {
     if (pr_diff_body.data.match(condition)) {
       console.log(`Condition ${condition} matched`)  //DEBUG
@@ -19,16 +17,19 @@ export function checkCondition(check_type: string, condition: RegExp, pr_diff_bo
   }
   if (check_type == 'pr_files') {
     for (const item of pr_files_list) {
-      if(item.match(condition)){
+      if (item.match(condition)) {
+        console.log(`Condition ${condition} matched`)  //DEBUG
         condition_match = true
       }
     }
   }
+  console.log(`###### END checkCondition ######`) //DEBUG
   return condition_match
 }
 
 export async function combineUsersTeams(client: any, context: Context, org: string, pr_owner: string, users: string[], teams: string[]): Promise<string[]> {
   const full_approvers_list: Set<string> = new Set()
+  console.log(`###### BEGIN combineUsersTeams ######`) //DEBUG
   console.log(`Users inside combine func: ${users} - `) //DEBUG
   if (users) {
     for (const user of users) {
@@ -59,15 +60,16 @@ export async function combineUsersTeams(client: any, context: Context, org: stri
     }
   }
   console.log(`Resulting full_approvers_list: ${full_approvers_list}`) //DEBUG
+  console.log(`###### END combineUsersTeams ######`) //DEBUG
   return Array.from(full_approvers_list)
 }
 
 export async function assignReviewers(client: any, reviewer_users: string[], reviewer_teams: string[], pr_number: number) {
   try {
-    console.log(`entering assignReviewers`) //DEBUG
-    console.log(`users length: ${reviewer_users.length} - ${reviewer_users}`) //DEBUG
+    console.log(`###### BEGIN assignReviewers ######`) //DEBUG
+    console.log(`users: ${reviewer_users.length} - ${reviewer_users}`) //DEBUG
     // You're safe to use default GITHUB_TOKEN until you request review only from users not teams
-    // It teams review is needed, then PAT token required
+    // If teams review is needed, then PAT token required with permission to read org
     if (reviewer_users) {
       await client.rest.pulls.requestReviewers({
         owner: github.context.repo.owner,
@@ -77,7 +79,7 @@ export async function assignReviewers(client: any, reviewer_users: string[], rev
       });
       core.info(`Requested review from users: ${reviewer_users}.`);
     }
-    console.log(`teams length: ${reviewer_teams.length} - ${reviewer_teams}`) //DEBUG
+    console.log(`teams: ${reviewer_teams.length} - ${reviewer_teams}`) //DEBUG
     if (reviewer_teams) {
       await client.rest.pulls.requestReviewers({
         owner: github.context.repo.owner,
@@ -87,14 +89,15 @@ export async function assignReviewers(client: any, reviewer_users: string[], rev
       });
       core.info(`Requested review from teams: ${reviewer_teams}.`);
     }
-    console.log(`exiting assignReviewers`) //DEBUG
   } catch (error) {
     core.setFailed(error.message)
     console.log("error: ", error)
   }
+  console.log(`###### END assignReviewers ######`) //DEBUG
 }
 
 async function run(): Promise<void> {
+  console.log(`###### BEGIN PR-CUSTOM-CHECK ACTION ######`)
   try {
     type ApprovalGroup = { name: string, min_approvals: number, users?: string[], teams?: string[], approvers: string[] }
     const final_approval_groups: ApprovalGroup[] = []
@@ -121,27 +124,27 @@ async function run(): Promise<void> {
     const sha = payload.pull_request.head.sha
     const workflow_name = process.env.GITHUB_WORKFLOW
     const workflow_url = `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`
-    const organization: string = process.env.GITHUB_REPOSITORY?.split("/")[0]!
+    const organization = process.env.GITHUB_REPOSITORY?.split("/")[0]!
     const pr_diff_body = await octokit.request(payload.pull_request.diff_url)
     const pr_files = await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}/files', {
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       pull_number: pr_number
     })
-    // TODO retrieve pr files list
+    // Retrieve PR's changes files
     const pr_files_list: Set<string> = new Set()
     for (var i = 0; i < pr_files.data.length; i++) {
       var obj = pr_files.data[i]
-      console.log(obj.filename) //DEBUG
       pr_files_list.add(obj.filename)
     }
+    console.log(`###### PR FILES LIST \n ${Array.from(pr_files_list).join('\n')}\n######`)
 
     var CUSTOM_REVIEW_REQUIRED: boolean = false
     const pr_status_messages: string[] = []
     const pr_review_status_messages: string[] = []
 
 
-    // condition to search files with changes to locked lines
+    // Built in condition to search files with changes to locked lines
     const search_locked_lines_regexp = /🔒.*(\n^[\+|\-].*)|^[\+|\-].*🔒/gm
     const search_res = pr_diff_body.data.match(search_locked_lines_regexp) //DEBUG
     console.log(`Search result: ${search_res}`) //DEBUG
