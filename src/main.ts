@@ -5,12 +5,16 @@ import * as fs from 'fs'
 import * as YAML from 'yaml'
 import { Context } from '@actions/github/lib/context'
 
-export async function checkCondition(check_type: string, condition: RegExp, pr_diff_body: any, pr_files_list: Set<string>): boolean {
+export async function checkCondition(check_type: string, condition: RegExp, pr_diff_body: any, pr_files_list: Set<string>): Promise<boolean> {
   console.log(`###### BEGIN checkCondition ######`) //DEBUG
   var condition_match: boolean = false
   console.log(`condition: ${condition}`) //DEBUG
   if (check_type == 'pr_diff') {
-    if (pr_diff_body.data.match(condition)) {
+    console.log(`pr_diff: ${pr_diff_body}`)
+    console.log(`condition: ${condition}`)
+    const eval_cond = pr_diff_body.data.match(condition)
+    console.log(`eval_cond: ${eval_cond}`)
+    if (eval_cond) {
       console.log(`Condition ${condition} matched`)  //DEBUG
       condition_match = true
     }

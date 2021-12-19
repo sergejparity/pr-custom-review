@@ -41,25 +41,31 @@ const github = __importStar(__nccwpck_require__(5438));
 const fs = __importStar(__nccwpck_require__(5747));
 const YAML = __importStar(__nccwpck_require__(3552));
 function checkCondition(check_type, condition, pr_diff_body, pr_files_list) {
-    console.log(`###### BEGIN checkCondition ######`); //DEBUG
-    var condition_match = false;
-    console.log(`condition: ${condition}`); //DEBUG
-    if (check_type == 'pr_diff') {
-        if (pr_diff_body.data.match(condition)) {
-            console.log(`Condition ${condition} matched`); //DEBUG
-            condition_match = true;
-        }
-    }
-    if (check_type == 'pr_files') {
-        for (const item of pr_files_list) {
-            if (item.match(condition)) {
+    return __awaiter(this, void 0, void 0, function* () {
+        console.log(`###### BEGIN checkCondition ######`); //DEBUG
+        var condition_match = false;
+        console.log(`condition: ${condition}`); //DEBUG
+        if (check_type == 'pr_diff') {
+            console.log(`pr_diff: ${pr_diff_body}`);
+            console.log(`condition: ${condition}`);
+            const eval_cond = pr_diff_body.data.match(condition);
+            console.log(`eval_cond: ${eval_cond}`);
+            if (eval_cond) {
                 console.log(`Condition ${condition} matched`); //DEBUG
                 condition_match = true;
             }
         }
-    }
-    console.log(`###### END checkCondition ######`); //DEBUG
-    return condition_match;
+        if (check_type == 'pr_files') {
+            for (const item of pr_files_list) {
+                if (item.match(condition)) {
+                    console.log(`Condition ${condition} matched`); //DEBUG
+                    condition_match = true;
+                }
+            }
+        }
+        console.log(`###### END checkCondition ######`); //DEBUG
+        return condition_match;
+    });
 }
 exports.checkCondition = checkCondition;
 function combineUsersTeams(client, context, org, pr_owner, users, teams) {
@@ -189,7 +195,7 @@ function run() {
                 for (const approval_group of config_file_contents.approval_groups) {
                     console.log(`approval_group: ${approval_group.name}`); //DEBUG
                     const condition = new RegExp(approval_group.condition, "gm");
-                    if (checkCondition(approval_group.check_type, condition, pr_diff_body, pr_files_list)) {
+                    if (yield checkCondition(approval_group.check_type, condition, pr_diff_body, pr_files_list)) {
                         CUSTOM_REVIEW_REQUIRED = true;
                         // Combine users and team members in `approvers` list, excluding pr_owner
                         var approvers = [];
