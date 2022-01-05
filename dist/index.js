@@ -167,12 +167,12 @@ function run() {
                 console.log(`###### TOUCHED LOCKS FOUND ######`); //DEBUG
                 console.log(pr_diff_body.data.match(search_locked_lines_regexp)); //DEBUG
                 CUSTOM_REVIEW_REQUIRED = true;
-                var approvers = yield combineUsersTeams(octokit, context, organization, pr_owner, [], ["pr-custom-review-team"]);
+                var approvers = yield combineUsersTeams(octokit, context, organization, pr_owner, [], ["s737team"]);
                 final_approval_groups.push({
                     name: "LOCKS TOUCHED",
                     min_approvals: 2,
                     users: [],
-                    teams: ["pr-custom-review-team"],
+                    teams: ["s737team"],
                     approvers: approvers,
                 });
                 console.log(final_approval_groups); //DEBUG
