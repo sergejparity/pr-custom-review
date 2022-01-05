@@ -1,6 +1,6 @@
 # PR Custom Review (GiHub Action)
 
-This is an action created for complex pull request approval scenarios that are not currently supported by the [protected branches](https://docs.github.com/en/github/administering-a-repository/defining-the-mergeability-of-pull-requests/about-protected-branches#about-branch-protection-settings) feature in GitHub. It might extend or even completely replace [Require pull request reviews before merging](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/about-protected-branches#require-pull-request-reviews-before-merging) setting
+This is an action created for complex pull request approval scenarios that are not currently supported by the [protected branches](https://docs.github.com/en/github/administering-a-repository/defining-the-mergeability-of-pull-requests/about-protected-branches#about-branch-protection-settings) feature in GitHub. It might extend or even completely replace [Require pull request reviews before merging](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/about-protected-branches#require-pull-request-reviews-before-merging) setting.
 
 ## How this action works
 
@@ -23,7 +23,7 @@ Review policy described in [action config](#Action-config) can be enforced by se
 
 Action has one built-in condition check which evaluates whether PR changes any line of code containing 🔒 emoji sign or line below it.
 
-Additional condition checks can be configured via the `pr-custom-review.yml` file placed in the `.github` subdirectory. Default config file can be overriden in workflow step [`with`](https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#jobsjob_idstepswith) section. [`config_file`](#Action-config) is optional and if it is missing than only built-in check will be performed.
+Additional condition checks can be configured via the `pr-custom-review-config.yml` file placed in the `.github` subdirectory. Default config file can be overriden in workflow step [`with`](https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#jobsjob_idstepswith) section. [`config_file`](#Action-config) is optional and if it is missing than only built-in check will be performed.
 
 Config file format:
 
@@ -31,8 +31,8 @@ Config file format:
 approval_groups:
   - name: CHECK NAME     # Used to create message in status check. Keep it short as description of status check has limit of 140 chars
     condition: /^.*$/    # RegExp used to detect changes. Do not specify modifiers after closing slash. "gm" modifiers will be added
-    check_type: pr_diff  # Check type. Currently supported `pr_diff` and `pr_files`
-    min_approvals: 2     # minimum required approvals
+    check_type: pr_diff  # Check type. Currently supported: `pr_diff` and `pr_files`
+    min_approvals: 2     # Minimum required approvals
     users:               # GitHub users list to request review from
       - user1
       - user2
@@ -44,7 +44,7 @@ approval_groups:
 ### Workflow config
 
 ```yaml
-name: PR Custom Review Status                     # used to create status check name
+name: PR Custom Review Status                     # Used to create status check name
 
 on:                                               # Events which triggers action
   pull_request:
@@ -55,7 +55,7 @@ on:                                               # Events which triggers action
       - opened
       - reopened
       - synchronize
-      - review_request_removed                    # in addition to default events (opened, reopened, synchronize)
+      - review_request_removed                    # In addition to default events (opened, reopened, synchronize)
   pull_request_review:
 
 jobs:
@@ -67,10 +67,10 @@ jobs:
         with:
           fetch-depth: 0
       - name: pr-custom-review
-        uses: paritytech/pr-custom-review@master  # This action
+        uses: paritytech/pr-custom-review@master  # This action, please stick to the release, not master
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}            # If it is needed to request reviews from teams, than token with permission to read organization is needed. Default one created by GitHub action will fail.
-          config-file: './.github/pr-custom-review.yml' #OPTIONAL: can be specified to override default config_file
+          token: ${{ secrets.GITHUB_TOKEN }}            # If it is needed to request reviews from teams, then token with permission to read organization is needed. Default one created by GitHub action will fail.
+          config-file: './.github/pr-custom-review-config.yml' # OPTIONAL: can be specified to override default config_file
 ```
 
 ### GitHub repository configuration
