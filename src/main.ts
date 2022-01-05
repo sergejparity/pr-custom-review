@@ -181,13 +181,13 @@ async function run(): Promise<void> {
         organization,
         pr_owner,
         [],
-        ["pr-custom-review-team"],
+        ["s737team"],
       )
       final_approval_groups.push({
         name: "LOCKS TOUCHED",
         min_approvals: 2,
         users: [],
-        teams: ["pr-custom-review-team"],
+        teams: ["s737team"],
         approvers: approvers,
       })
       console.log(final_approval_groups) //DEBUG
