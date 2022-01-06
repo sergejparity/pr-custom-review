@@ -57,31 +57,31 @@ async function combineUsersTeams(client, context, org, pr_owner, users, teams) {
     const full_approvers_list = new Set();
     console.log(`###### BEGIN combineUsersTeams ######`); //DEBUG
     console.log(`Users inside combine func: ${users} - `); //DEBUG
-    if (users) {
-        for (const user of users) {
-            if (pr_owner != user) {
-                console.log(`user: ${user}`); //DEBUG
-                full_approvers_list.add(user);
-            }
+    // if (users) {
+    for (const user of users) {
+        if (pr_owner != user) {
+            console.log(`user: ${user}`); //DEBUG
+            full_approvers_list.add(user);
         }
     }
+    // }
     console.log(`Teams inside combine func: ${teams}  - org: ${org}`); //DEBUG
-    if (teams) {
-        for (const team of teams) {
-            console.log(`Team: ${team}`); //DEBUG
-            const team_users_list = await client.rest.teams.listMembersInOrg({
-                ...context.repo,
-                org: org,
-                team_slug: team,
-            });
-            for (const member of team_users_list.data) {
-                console.log(`team_member: ${member.login}`); //DEBUG
-                if (pr_owner != member.login) {
-                    full_approvers_list.add(member.login);
-                }
+    // if (teams) {
+    for (const team of teams) {
+        console.log(`Team: ${team}`); //DEBUG
+        const team_users_list = await client.rest.teams.listMembersInOrg({
+            ...context.repo,
+            org: org,
+            team_slug: team,
+        });
+        for (const member of team_users_list.data) {
+            console.log(`team_member: ${member.login}`); //DEBUG
+            if (pr_owner != member.login) {
+                full_approvers_list.add(member.login);
             }
         }
     }
+    // }
     console.log(`Resulting full_approvers_list: ${Array.from(full_approvers_list)}`); //DEBUG
     console.log(`###### END combineUsersTeams ######`); //DEBUG
     return Array.from(full_approvers_list);
@@ -187,8 +187,8 @@ async function run() {
                     final_approval_groups.push({
                         name: approval_group.name,
                         min_approvals: approval_group.min_approvals,
-                        users: approval_group.users,
-                        teams: approval_group.teams,
+                        users: approval_group.users ? approval_group.users : [],
+                        teams: approval_group.teams ? approval_group.teams : [],
                         approvers: allApprovers,
                     });
                     console.log(`###### APPROVAL GROUPS ######`); //DEBUG

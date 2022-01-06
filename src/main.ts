@@ -43,16 +43,16 @@ export async function combineUsersTeams(
   const full_approvers_list: Set<string> = new Set()
   console.log(`###### BEGIN combineUsersTeams ######`) //DEBUG
   console.log(`Users inside combine func: ${users} - `) //DEBUG
-  if (users) {
+  // if (users) {
     for (const user of users) {
       if (pr_owner != user) {
         console.log(`user: ${user}`) //DEBUG
         full_approvers_list.add(user)
       }
     }
-  }
+  // }
   console.log(`Teams inside combine func: ${teams}  - org: ${org}`) //DEBUG
-  if (teams) {
+  // if (teams) {
     for (const team of teams) {
       console.log(`Team: ${team}`) //DEBUG
       const team_users_list = await client.rest.teams.listMembersInOrg({
@@ -68,7 +68,7 @@ export async function combineUsersTeams(
         }
       }
     }
-  }
+  // }
   console.log(
     `Resulting full_approvers_list: ${Array.from(full_approvers_list)}`,
   ) //DEBUG
@@ -230,8 +230,8 @@ async function run(): Promise<void> {
           final_approval_groups.push({
             name: approval_group.name,
             min_approvals: approval_group.min_approvals,
-            users: approval_group.users,
-            teams: approval_group.teams,
+            users: approval_group.users ? approval_group.users : [],
+            teams: approval_group.teams ? approval_group.teams : [],
             approvers: allApprovers,
           })
           console.log(`###### APPROVAL GROUPS ######`) //DEBUG
