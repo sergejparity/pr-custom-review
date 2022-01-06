@@ -224,14 +224,14 @@ async function run(): Promise<void> {
             context,
             organization,
             pr_owner,
-            approval_group.users,
-            approval_group.teams,
+            (approval_group.users) ? approval_group.users : [],
+            (approval_group.teams) ? approval_group.teams : [],
           )
           final_approval_groups.push({
             name: approval_group.name,
             min_approvals: approval_group.min_approvals,
-            users: (approval_group.users) ? approval_group.users : [],
-            teams: (approval_group.teams) ? approval_group.teams : [],
+            users: approval_group.users,
+            teams: approval_group.teams,
             approvers: allApprovers,
           })
           console.log(`###### APPROVAL GROUPS ######`) //DEBUG
