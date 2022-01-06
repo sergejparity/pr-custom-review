@@ -43,25 +43,29 @@ export async function combineUsersTeams(
   const full_approvers_list: Set<string> = new Set()
   console.log(`###### BEGIN combineUsersTeams ######`) //DEBUG
   console.log(`Users inside combine func: ${users} - `) //DEBUG
-  for (const user of users) {
-    if (pr_owner != user) {
-      console.log(`user: ${user}`) //DEBUG
-      full_approvers_list.add(user)
+  if (users) {
+    for (const user of users) {
+      if (pr_owner != user) {
+        console.log(`user: ${user}`) //DEBUG
+        full_approvers_list.add(user)
+      }
     }
   }
   console.log(`Teams inside combine func: ${teams}  - org: ${org}`) //DEBUG
-  for (const team of teams) {
-    console.log(`Team: ${team}`) //DEBUG
-    const team_users_list = await client.rest.teams.listMembersInOrg({
-      ...context.repo,
-      org: org,
-      team_slug: team,
-    })
+  if (teams) {
+    for (const team of teams) {
+      console.log(`Team: ${team}`) //DEBUG
+      const team_users_list = await client.rest.teams.listMembersInOrg({
+        ...context.repo,
+        org: org,
+        team_slug: team,
+      })
 
-    for (const member of team_users_list.data) {
-      console.log(`team_member: ${member!.login!}`) //DEBUG
-      if (pr_owner != member!.login) {
-        full_approvers_list.add(member!.login)
+      for (const member of team_users_list.data) {
+        console.log(`team_member: ${member!.login!}`) //DEBUG
+        if (pr_owner != member!.login) {
+          full_approvers_list.add(member!.login)
+        }
       }
     }
   }
@@ -331,8 +335,7 @@ async function run(): Promise<void> {
           [...group_approvers].filter((x) => approved_users.has(x)),
         )
         console.log(
-          `Need min ${group.min_approvals} approvals from ${
-            group.approvers
+          `Need min ${group.min_approvals} approvals from ${group.approvers
           } --- has ${has_approvals.size} - ${Array.from(has_approvals)}`,
         ) //DEBUG
         if (has_approvals.size >= group.min_approvals) {
