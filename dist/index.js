@@ -40,8 +40,8 @@ const approvalGroupSchema = joi_1.default.object().keys({
     condition: joi_1.default.string().required(),
     check_type: joi_1.default.string().valid("pr_diff", "pr_files").required(),
     min_approvals: joi_1.default.number().required(),
-    users: joi_1.default.array().items(joi_1.default.string()),
-    teams: joi_1.default.array().items(joi_1.default.string()),
+    users: joi_1.default.array()?.items(joi_1.default.string()),
+    teams: joi_1.default.array()?.items(joi_1.default.string()),
 });
 const rulesConfigurationSchema = joi_1.default.object().keys({
     approval_groups: joi_1.default.array().items(approvalGroupSchema).required(),
@@ -187,16 +187,24 @@ async function run() {
             });
         }
         // Read values from config file if it exists
+        // console.log(`###### CONFIG FILE EVALUATION ######`) //DEBUG
+        // if (fs.existsSync(core.getInput("config-file"))) {
+        //   const config_file = fs.readFileSync(core.getInput("config-file"), "utf8")
+        //   const validation_result = rulesConfigurationSchema.validate(
+        //     YAML.parse(config_file),
+        //   )
+        //   if (validation_result.error) {
+        //     console.error("Configuration file is invalid", validation_result.error)
+        //     core.setFailed(validation_result.error)
+        //     process.exit(1)
+        //   }
+        //   const config_file_contents = validation_result.value
+        // Read values from config file if it exists
         console.log(`###### CONFIG FILE EVALUATION ######`); //DEBUG
+        var config_file_contents = "";
         if (fs.existsSync(core.getInput("config-file"))) {
             const config_file = fs.readFileSync(core.getInput("config-file"), "utf8");
-            const validation_result = rulesConfigurationSchema.validate(YAML.parse(config_file));
-            if (validation_result.error) {
-                console.error("Configuration file is invalid", validation_result.error);
-                core.setFailed(validation_result.error);
-                process.exit(1);
-            }
-            const config_file_contents = validation_result.value;
+            config_file_contents = YAML.parse(config_file);
             for (const approval_group of config_file_contents.approval_groups) {
                 console.log(`approval_group: ${approval_group.name}`); //DEBUG
                 const condition = new RegExp(approval_group.condition, "gm");
