@@ -2,6 +2,7 @@ import * as core from "@actions/core"
 import * as github from "@actions/github"
 import { Context } from "@actions/github/lib/context"
 import * as Webhooks from "@octokit/webhooks-types"
+import { diffieHellman } from "crypto"
 import * as fs from "fs"
 import * as YAML from "yaml"
 
@@ -44,30 +45,30 @@ export async function combineUsersTeams(
   console.log(`###### BEGIN combineUsersTeams ######`) //DEBUG
   console.log(`Users inside combine func: ${users} - `) //DEBUG
   // if (users) {
-    for (const user of users) {
-      if (pr_owner != user) {
-        console.log(`user: ${user}`) //DEBUG
-        full_approvers_list.add(user)
-      }
+  for (const user of users) {
+    if (pr_owner != user) {
+      console.log(`user: ${user}`) //DEBUG
+      full_approvers_list.add(user)
     }
+  }
   // }
   console.log(`Teams inside combine func: ${teams}  - org: ${org}`) //DEBUG
   // if (teams) {
-    for (const team of teams) {
-      console.log(`Team: ${team}`) //DEBUG
-      const team_users_list = await client.rest.teams.listMembersInOrg({
-        ...context.repo,
-        org: org,
-        team_slug: team,
-      })
+  for (const team of teams) {
+    console.log(`Team: ${team}`) //DEBUG
+    const team_users_list = await client.rest.teams.listMembersInOrg({
+      ...context.repo,
+      org: org,
+      team_slug: team,
+    })
 
-      for (const member of team_users_list.data) {
-        console.log(`team_member: ${member!.login!}`) //DEBUG
-        if (pr_owner != member!.login) {
-          full_approvers_list.add(member!.login)
-        }
+    for (const member of team_users_list.data) {
+      console.log(`team_member: ${member!.login!}`) //DEBUG
+      if (pr_owner != member!.login) {
+        full_approvers_list.add(member!.login)
       }
     }
+  }
   // }
   console.log(
     `Resulting full_approvers_list: ${Array.from(full_approvers_list)}`,
@@ -148,7 +149,18 @@ async function run(): Promise<void> {
     const workflow_name = process.env.GITHUB_WORKFLOW
     const workflow_url = `${process.env["GITHUB_SERVER_URL"]}/${process.env["GITHUB_REPOSITORY"]}/actions/runs/${process.env["GITHUB_RUN_ID"]}`
     const organization = process.env.GITHUB_REPOSITORY?.split("/")[0]!
-    const pr_diff_body = await octokit.request(payload.pull_request.diff_url)
+    const pr_diff_body = await octokit.request(
+      "GET /repos/{owner}/{repo}/pulls/{pull_number}",
+      {
+        owner: payload.repository.owner.login,
+        repo: payload.repository.name,
+        pull_number: pr_number,
+        mediaType: {
+          format: "diff",
+        }
+      },
+    )
+    // payload.pull_request.diff_url)
     const pr_files = await octokit.request(
       "GET /repos/{owner}/{repo}/pulls/{pull_number}/files",
       {

@@ -138,7 +138,15 @@ async function run() {
         const workflow_name = process.env.GITHUB_WORKFLOW;
         const workflow_url = `${process.env["GITHUB_SERVER_URL"]}/${process.env["GITHUB_REPOSITORY"]}/actions/runs/${process.env["GITHUB_RUN_ID"]}`;
         const organization = process.env.GITHUB_REPOSITORY?.split("/")[0];
-        const pr_diff_body = await octokit.request(payload.pull_request.diff_url);
+        const pr_diff_body = await octokit.request("GET /repos/{owner}/{repo}/pulls/{pull_number}", {
+            owner: payload.repository.owner.login,
+            repo: payload.repository.name,
+            pull_number: pr_number,
+            mediaType: {
+                format: "diff",
+            }
+        });
+        // payload.pull_request.diff_url)
         const pr_files = await octokit.request("GET /repos/{owner}/{repo}/pulls/{pull_number}/files", {
             owner: payload.repository.owner.login,
             repo: payload.repository.name,
@@ -183,7 +191,7 @@ async function run() {
                 if (checkCondition(approval_group.check_type, condition, pr_diff_body, pr_files_list)) {
                     CUSTOM_REVIEW_REQUIRED = true;
                     // Combine users and team members in `approvers` list, excluding pr_owner
-                    var allApprovers = await combineUsersTeams(octokit, context, organization, pr_owner, (approval_group.users) ? approval_group.users : [], (approval_group.teams) ? approval_group.teams : []);
+                    var allApprovers = await combineUsersTeams(octokit, context, organization, pr_owner, approval_group.users ?? [], approval_group.teams ?? []);
                     final_approval_groups.push({
                         name: approval_group.name,
                         min_approvals: approval_group.min_approvals,
