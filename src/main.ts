@@ -2,21 +2,46 @@ import * as core from "@actions/core"
 import * as github from "@actions/github"
 import { Context } from "@actions/github/lib/context"
 import * as Webhooks from "@octokit/webhooks-types"
-import { diffieHellman } from "crypto"
 import * as fs from "fs"
+import Joi from "joi"
 import * as YAML from "yaml"
+
+type Octokit = ReturnType<typeof github.getOctokit>
+
+type ApprovalGroup = {
+  name: string
+  condition: string
+  check_type: "pr_diff" | "pr_files"
+  min_approvals: number
+  users: Array<string> | undefined
+  teams: Array<string> | undefined
+}
+const approvalGroupSchema = Joi.object<ApprovalGroup>().keys({
+  name: Joi.string().required(),
+  condition: Joi.string().required(),
+  check_type: Joi.string().valid("pr_diff", "pr_files").required(),
+  min_approvals: Joi.number().required(),
+  users: Joi.array().items(Joi.string()),
+  teams: Joi.array().items(Joi.string()),
+})
+type RulesConfiguration = {
+  approval_groups: ApprovalGroup[]
+}
+const rulesConfigurationSchema = Joi.object<RulesConfiguration>().keys({
+  approval_groups: Joi.array().items(approvalGroupSchema).required(),
+})
 
 export function checkCondition(
   check_type: string,
   condition: RegExp,
-  pr_diff_body: any,
+  pr_diff_body: string,
   pr_files_list: Set<string>,
 ): boolean {
   console.log(`###### BEGIN checkCondition ######`) //DEBUG
   var condition_match: boolean = false
   console.log(`condition: ${condition}`) //DEBUG
   if (check_type === "pr_diff") {
-    if (pr_diff_body.data.match(condition) !== null) {
+    if (pr_diff_body.match(condition) !== null) {
       console.log(`Condition ${condition} matched`) //DEBUG
       condition_match = true
     }
@@ -34,7 +59,7 @@ export function checkCondition(
 }
 
 export async function combineUsersTeams(
-  client: any,
+  client: Octokit,
   context: Context,
   org: string,
   pr_owner: string,
@@ -44,16 +69,13 @@ export async function combineUsersTeams(
   const full_approvers_list: Set<string> = new Set()
   console.log(`###### BEGIN combineUsersTeams ######`) //DEBUG
   console.log(`Users inside combine func: ${users} - `) //DEBUG
-  // if (users) {
   for (const user of users) {
     if (pr_owner != user) {
       console.log(`user: ${user}`) //DEBUG
       full_approvers_list.add(user)
     }
   }
-  // }
   console.log(`Teams inside combine func: ${teams}  - org: ${org}`) //DEBUG
-  // if (teams) {
   for (const team of teams) {
     console.log(`Team: ${team}`) //DEBUG
     const team_users_list = await client.rest.teams.listMembersInOrg({
@@ -69,7 +91,6 @@ export async function combineUsersTeams(
       }
     }
   }
-  // }
   console.log(
     `Resulting full_approvers_list: ${Array.from(full_approvers_list)}`,
   ) //DEBUG
@@ -78,7 +99,7 @@ export async function combineUsersTeams(
 }
 
 export async function assignReviewers(
-  client: any,
+  client: Octokit,
   reviewer_users: string[],
   reviewer_teams: string[],
   pr_number: number,
@@ -108,7 +129,7 @@ export async function assignReviewers(
       core.info(`Requested review from teams: ${reviewer_teams}.`)
     }
   } catch (error) {
-    core.setFailed(error.message)
+    core.setFailed(error instanceof Error ? error : String(error))
     console.log("error: ", error)
   }
   console.log(`###### END assignReviewers ######`) //DEBUG
@@ -149,19 +170,16 @@ async function run(): Promise<void> {
     const workflow_name = process.env.GITHUB_WORKFLOW
     const workflow_url = `${process.env["GITHUB_SERVER_URL"]}/${process.env["GITHUB_REPOSITORY"]}/actions/runs/${process.env["GITHUB_RUN_ID"]}`
     const organization = process.env.GITHUB_REPOSITORY?.split("/")[0]!
-    const pr_diff_body = await octokit.request(
+    const pr_diff_body_request = await octokit.request(
       "GET /repos/{owner}/{repo}/pulls/{pull_number}",
       {
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
         pull_number: pr_number,
-        mediaType: {
-          format: "diff",
-        }
+        mediaType: { format: "diff" },
       },
     )
-    console.log(`###### DIFF BODY #######\n ${pr_diff_body.data} \n ###### DIFF BODY END ######`)
-    // payload.pull_request.diff_url)
+    const pr_diff_body: string = pr_diff_body_request.data.toString()
     const pr_files = await octokit.request(
       "GET /repos/{owner}/{repo}/pulls/{pull_number}/files",
       {
@@ -188,9 +206,9 @@ async function run(): Promise<void> {
 
     // Built in condition to search files with changes to locked lines
     const search_locked_lines_regexp: RegExp = /🔒.*(\n^[+|-].*)|^[+|-].*🔒/gm
-    if (pr_diff_body.data.match(search_locked_lines_regexp) !== null) {
+    if (pr_diff_body.match(search_locked_lines_regexp) !== null) {
       console.log(`###### TOUCHED LOCKS FOUND ######`) //DEBUG
-      console.log(pr_diff_body.data.match(search_locked_lines_regexp)) //DEBUG
+      console.log(pr_diff_body.match(search_locked_lines_regexp)) //DEBUG
       CUSTOM_REVIEW_REQUIRED = true
       var approvers: string[] = await combineUsersTeams(
         octokit,
@@ -207,16 +225,21 @@ async function run(): Promise<void> {
         teams: ["s737team"],
         approvers: approvers,
       })
-      console.log(final_approval_groups) //DEBUG
-      pr_status_messages.push(`LOCKS TOUCHED review required`)
     }
 
     // Read values from config file if it exists
     console.log(`###### CONFIG FILE EVALUATION ######`) //DEBUG
-    var config_file_contents: any = ""
     if (fs.existsSync(core.getInput("config-file"))) {
       const config_file = fs.readFileSync(core.getInput("config-file"), "utf8")
-      config_file_contents = YAML.parse(config_file)
+      const validation_result = rulesConfigurationSchema.validate(
+        YAML.parse(config_file),
+      )
+      if (validation_result.error) {
+        console.error("Configuration file is invalid", validation_result.error)
+        core.setFailed(validation_result.error)
+        process.exit(1)
+      }
+      const config_file_contents = validation_result.value
 
       for (const approval_group of config_file_contents.approval_groups) {
         console.log(`approval_group: ${approval_group.name}`) //DEBUG
@@ -348,7 +371,8 @@ async function run(): Promise<void> {
           [...group_approvers].filter((x) => approved_users.has(x)),
         )
         console.log(
-          `Need min ${group.min_approvals} approvals from ${group.approvers
+          `Need min ${group.min_approvals} approvals from ${
+            group.approvers
           } --- has ${has_approvals.size} - ${Array.from(has_approvals)}`,
         ) //DEBUG
         if (has_approvals.size >= group.min_approvals) {
@@ -382,7 +406,7 @@ async function run(): Promise<void> {
       }
     }
   } catch (error) {
-    core.setFailed(error.message)
+    core.setFailed(error instanceof Error ? error : String(error))
     console.log("error: ", error)
   }
 }
