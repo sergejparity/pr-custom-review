@@ -21,8 +21,8 @@ const approvalGroupSchema = Joi.object<ApprovalGroup>().keys({
   condition: Joi.string().required(),
   check_type: Joi.string().valid("pr_diff", "pr_files").required(),
   min_approvals: Joi.number().required(),
-  users: Joi.array()?.items(Joi.string()),
-  teams: Joi.array()?.items(Joi.string()),
+  users: Joi.array().items(Joi.string()),
+  teams: Joi.array().items(Joi.string()),
 })
 type RulesConfiguration = {
   approval_groups: ApprovalGroup[]
@@ -228,24 +228,18 @@ async function run(): Promise<void> {
     }
 
     // Read values from config file if it exists
-    // console.log(`###### CONFIG FILE EVALUATION ######`) //DEBUG
-    // if (fs.existsSync(core.getInput("config-file"))) {
-    //   const config_file = fs.readFileSync(core.getInput("config-file"), "utf8")
-    //   const validation_result = rulesConfigurationSchema.validate(
-    //     YAML.parse(config_file),
-    //   )
-    //   if (validation_result.error) {
-    //     console.error("Configuration file is invalid", validation_result.error)
-    //     core.setFailed(validation_result.error)
-    //     process.exit(1)
-    //   }
-    //   const config_file_contents = validation_result.value
-    // Read values from config file if it exists
     console.log(`###### CONFIG FILE EVALUATION ######`) //DEBUG
-    var config_file_contents: any = ""
     if (fs.existsSync(core.getInput("config-file"))) {
       const config_file = fs.readFileSync(core.getInput("config-file"), "utf8")
-      config_file_contents = YAML.parse(config_file)
+      const validation_result = rulesConfigurationSchema.validate(
+        YAML.parse(config_file),
+      )
+      if (validation_result.error) {
+        console.error("Configuration file is invalid", validation_result.error)
+        core.setFailed(validation_result.error)
+        process.exit(1)
+      }
+      const config_file_contents = validation_result.value
 
       for (const approval_group of config_file_contents.approval_groups) {
         console.log(`approval_group: ${approval_group.name}`) //DEBUG
@@ -377,7 +371,8 @@ async function run(): Promise<void> {
           [...group_approvers].filter((x) => approved_users.has(x)),
         )
         console.log(
-          `Need min ${group.min_approvals} approvals from ${group.approvers
+          `Need min ${group.min_approvals} approvals from ${
+            group.approvers
           } --- has ${has_approvals.size} - ${Array.from(has_approvals)}`,
         ) //DEBUG
         if (has_approvals.size >= group.min_approvals) {
