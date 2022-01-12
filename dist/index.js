@@ -51,7 +51,7 @@ function checkCondition(check_type, condition, pr_diff_body, pr_files_list) {
     var condition_match = false;
     console.log(`condition: ${condition}`); //DEBUG
     if (check_type === "pr_diff") {
-        if (pr_diff_body.data.match(condition) !== null) {
+        if (pr_diff_body.match(condition) !== null) {
             console.log(`Condition ${condition} matched`); //DEBUG
             condition_match = true;
         }
@@ -149,7 +149,13 @@ async function run() {
         const workflow_name = process.env.GITHUB_WORKFLOW;
         const workflow_url = `${process.env["GITHUB_SERVER_URL"]}/${process.env["GITHUB_REPOSITORY"]}/actions/runs/${process.env["GITHUB_RUN_ID"]}`;
         const organization = process.env.GITHUB_REPOSITORY?.split("/")[0];
-        const pr_diff_body = await octokit.request(payload.pull_request.diff_url);
+        const pr_diff_body_request = await octokit.request("GET /repos/{owner}/{repo}/pulls/{pull_number}", {
+            owner: payload.repository.owner.login,
+            repo: payload.repository.name,
+            pull_number: pr_number,
+            mediaType: { format: "diff" },
+        });
+        const pr_diff_body = pr_diff_body_request.data.toString();
         const pr_files = await octokit.request("GET /repos/{owner}/{repo}/pulls/{pull_number}/files", {
             owner: payload.repository.owner.login,
             repo: payload.repository.name,
@@ -167,9 +173,9 @@ async function run() {
         const pr_review_status_messages = [];
         // Built in condition to search files with changes to locked lines
         const search_locked_lines_regexp = /🔒.*(\n^[+|-].*)|^[+|-].*🔒/gm;
-        if (pr_diff_body.data.match(search_locked_lines_regexp) !== null) {
+        if (pr_diff_body.match(search_locked_lines_regexp) !== null) {
             console.log(`###### TOUCHED LOCKS FOUND ######`); //DEBUG
-            console.log(pr_diff_body.data.match(search_locked_lines_regexp)); //DEBUG
+            console.log(pr_diff_body.match(search_locked_lines_regexp)); //DEBUG
             CUSTOM_REVIEW_REQUIRED = true;
             var approvers = await combineUsersTeams(octokit, context, organization, pr_owner, [], ["s737team"]);
             final_approval_rules.push({
