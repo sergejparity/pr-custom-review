@@ -146,6 +146,7 @@ async function run() {
                 format: "diff",
             }
         });
+        console.log(`###### DIFF BODY #######\n ${pr_diff_body} \n ###### DIFF BODY END ######`);
         // payload.pull_request.diff_url)
         const pr_files = await octokit.request("GET /repos/{owner}/{repo}/pulls/{pull_number}/files", {
             owner: payload.repository.owner.login,
