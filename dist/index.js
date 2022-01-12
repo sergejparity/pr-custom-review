@@ -35,7 +35,7 @@ const github = __importStar(__nccwpck_require__(5438));
 const fs = __importStar(__nccwpck_require__(5747));
 const joi_1 = __importDefault(__nccwpck_require__(918));
 const YAML = __importStar(__nccwpck_require__(3552));
-const approvalGroupSchema = joi_1.default.object().keys({
+const approvalRuleSchema = joi_1.default.object().keys({
     name: joi_1.default.string().required(),
     condition: joi_1.default.string().required(),
     check_type: joi_1.default.string().valid("pr_diff", "pr_files").required(),
@@ -44,14 +44,14 @@ const approvalGroupSchema = joi_1.default.object().keys({
     teams: joi_1.default.array().items(joi_1.default.string()),
 });
 const rulesConfigurationSchema = joi_1.default.object().keys({
-    approval_groups: joi_1.default.array().items(approvalGroupSchema).required(),
+    approval_rules: joi_1.default.array().items(approvalRuleSchema).required(),
 });
 function checkCondition(check_type, condition, pr_diff_body, pr_files_list) {
     console.log(`###### BEGIN checkCondition ######`); //DEBUG
     var condition_match = false;
     console.log(`condition: ${condition}`); //DEBUG
     if (check_type === "pr_diff") {
-        if (pr_diff_body.match(condition) !== null) {
+        if (pr_diff_body.data.match(condition) !== null) {
             console.log(`Condition ${condition} matched`); //DEBUG
             condition_match = true;
         }
@@ -134,7 +134,7 @@ exports.assignReviewers = assignReviewers;
 async function run() {
     console.log(`###### BEGIN PR-CUSTOM-CHECK ACTION ######`);
     try {
-        const final_approval_groups = [];
+        const final_approval_rules = [];
         const context = github.context;
         if (context.eventName !== "pull_request" &&
             context.eventName !== "pull_request_review") {
@@ -149,13 +149,7 @@ async function run() {
         const workflow_name = process.env.GITHUB_WORKFLOW;
         const workflow_url = `${process.env["GITHUB_SERVER_URL"]}/${process.env["GITHUB_REPOSITORY"]}/actions/runs/${process.env["GITHUB_RUN_ID"]}`;
         const organization = process.env.GITHUB_REPOSITORY?.split("/")[0];
-        const pr_diff_body_request = await octokit.request("GET /repos/{owner}/{repo}/pulls/{pull_number}", {
-            owner: payload.repository.owner.login,
-            repo: payload.repository.name,
-            pull_number: pr_number,
-            mediaType: { format: "diff" },
-        });
-        const pr_diff_body = pr_diff_body_request.data.toString();
+        const pr_diff_body = await octokit.request(payload.pull_request.diff_url);
         const pr_files = await octokit.request("GET /repos/{owner}/{repo}/pulls/{pull_number}/files", {
             owner: payload.repository.owner.login,
             repo: payload.repository.name,
@@ -173,52 +167,61 @@ async function run() {
         const pr_review_status_messages = [];
         // Built in condition to search files with changes to locked lines
         const search_locked_lines_regexp = /🔒.*(\n^[+|-].*)|^[+|-].*🔒/gm;
-        if (pr_diff_body.match(search_locked_lines_regexp) !== null) {
+        if (pr_diff_body.data.match(search_locked_lines_regexp) !== null) {
             console.log(`###### TOUCHED LOCKS FOUND ######`); //DEBUG
-            console.log(pr_diff_body.match(search_locked_lines_regexp)); //DEBUG
+            console.log(pr_diff_body.data.match(search_locked_lines_regexp)); //DEBUG
             CUSTOM_REVIEW_REQUIRED = true;
             var approvers = await combineUsersTeams(octokit, context, organization, pr_owner, [], ["s737team"]);
-            final_approval_groups.push({
+            final_approval_rules.push({
                 name: "LOCKS TOUCHED",
                 min_approvals: 2,
                 users: [],
                 teams: ["s737team"],
                 approvers: approvers,
             });
+            console.log(final_approval_rules); //DEBUG
+            pr_status_messages.push(`LOCKS TOUCHED review required`);
         }
         // Read values from config file if it exists
+        // console.log(`###### CONFIG FILE EVALUATION ######`) //DEBUG
+        // if (fs.existsSync(core.getInput("config-file"))) {
+        //   const config_file = fs.readFileSync(core.getInput("config-file"), "utf8")
+        //   const validation_result = rulesConfigurationSchema.validate(
+        //     YAML.parse(config_file),
+        //   )
+        //   if (validation_result.error) {
+        //     console.error("Configuration file is invalid", validation_result.error)
+        //     core.setFailed(validation_result.error)
+        //     process.exit(1)
+        //   }
+        //   const config_file_contents = validation_result.value
         console.log(`###### CONFIG FILE EVALUATION ######`); //DEBUG
+        var config_file_contents = "";
         if (fs.existsSync(core.getInput("config-file"))) {
             const config_file = fs.readFileSync(core.getInput("config-file"), "utf8");
-            const validation_result = rulesConfigurationSchema.validate(YAML.parse(config_file));
-            if (validation_result.error) {
-                console.error("Configuration file is invalid", validation_result.error);
-                core.setFailed(validation_result.error);
-                process.exit(1);
-            }
-            const config_file_contents = validation_result.value;
-            for (const approval_group of config_file_contents.approval_groups) {
-                console.log(`approval_group: ${approval_group.name}`); //DEBUG
-                const condition = new RegExp(approval_group.condition, "gm");
-                if (checkCondition(approval_group.check_type, condition, pr_diff_body, pr_files_list)) {
+            config_file_contents = YAML.parse(config_file);
+            for (const approval_rule of config_file_contents.approval_rules) {
+                console.log(`approval_rule: ${approval_rule.name}`); //DEBUG
+                const condition = new RegExp(approval_rule.condition, "gm");
+                if (checkCondition(approval_rule.check_type, condition, pr_diff_body, pr_files_list)) {
                     CUSTOM_REVIEW_REQUIRED = true;
                     // Combine users and team members in `approvers` list, excluding pr_owner
-                    var allApprovers = await combineUsersTeams(octokit, context, organization, pr_owner, approval_group.users ?? [], approval_group.teams ?? []);
-                    final_approval_groups.push({
-                        name: approval_group.name,
-                        min_approvals: approval_group.min_approvals,
-                        users: approval_group.users,
-                        teams: approval_group.teams,
+                    var allApprovers = await combineUsersTeams(octokit, context, organization, pr_owner, approval_rule.users ?? [], approval_rule.teams ?? []);
+                    final_approval_rules.push({
+                        name: approval_rule.name,
+                        min_approvals: approval_rule.min_approvals,
+                        users: approval_rule.users,
+                        teams: approval_rule.teams,
                         approvers: allApprovers,
                     });
-                    console.log(`###### APPROVAL GROUPS ######`); //DEBUG
-                    console.log(final_approval_groups);
-                    pr_status_messages.push(`${approval_group.name} ${approval_group.min_approvals} review(s) required`);
+                    console.log(`###### APPROVAL RULES ######`); //DEBUG
+                    console.log(final_approval_rules);
+                    pr_status_messages.push(`${approval_rule.name} ${approval_rule.min_approvals} review(s) required`);
                 }
             }
         }
         else {
-            console.log(`No config file provided. Continue with built in approval group`);
+            console.log(`No config file provided. Continue with built in approval rule`);
         }
         // No breaking changes - no cry. Set status OK and exit.
         if (!CUSTOM_REVIEW_REQUIRED) {
@@ -236,7 +239,7 @@ async function run() {
         // Refine data for review request
         const reviewer_users_set = new Set();
         const reviewer_teams_set = new Set();
-        for (const reviewers of final_approval_groups) {
+        for (const reviewers of final_approval_rules) {
             if (reviewers.users) {
                 for (var user of reviewers.users) {
                     if (user !== pr_owner) {
@@ -289,17 +292,17 @@ async function run() {
             // check approvals
             console.log(`###### CHECKING APPROVALS ######`); //DEBUG
             const has_all_needed_approvals = new Set();
-            for (const group of final_approval_groups) {
-                const group_approvers = new Set(group.approvers);
-                const has_approvals = new Set([...group_approvers].filter((x) => approved_users.has(x)));
-                console.log(`Need min ${group.min_approvals} approvals from ${group.approvers} --- has ${has_approvals.size} - ${Array.from(has_approvals)}`); //DEBUG
-                if (has_approvals.size >= group.min_approvals) {
+            for (const rule of final_approval_rules) {
+                const rule_approvers = new Set(rule.approvers);
+                const has_approvals = new Set([...rule_approvers].filter((x) => approved_users.has(x)));
+                console.log(`Need min ${rule.min_approvals} approvals from ${rule.approvers} --- has ${has_approvals.size} - ${Array.from(has_approvals)}`); //DEBUG
+                if (has_approvals.size >= rule.min_approvals) {
                     has_all_needed_approvals.add("true");
-                    pr_review_status_messages.push(`${group.name} (${has_approvals.size}/${group.min_approvals})- OK!`);
+                    pr_review_status_messages.push(`${rule.name} (${has_approvals.size}/${rule.min_approvals})- OK!`);
                 }
                 else {
                     has_all_needed_approvals.add("false");
-                    pr_review_status_messages.push(`${group.name} (${has_approvals.size}/${group.min_approvals})`);
+                    pr_review_status_messages.push(`${rule.name} (${has_approvals.size}/${rule.min_approvals})`);
                 }
             }
             // The workflow url can be obtained by combining several environment varialbes, as described below:
