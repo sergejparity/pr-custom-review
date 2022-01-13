@@ -34,7 +34,7 @@ const github = __importStar(__nccwpck_require__(5438));
 const fs = __importStar(__nccwpck_require__(5747));
 const joi_1 = __importDefault(__nccwpck_require__(918));
 const YAML = __importStar(__nccwpck_require__(3552));
-const approvalGroupSchema = joi_1.default.object().keys({
+const ruleSchema = joi_1.default.object().keys({
     name: joi_1.default.string().required(),
     condition: joi_1.default.string().required(),
     check_type: joi_1.default.string().valid("diff", "changed_files").required(),
@@ -43,7 +43,7 @@ const approvalGroupSchema = joi_1.default.object().keys({
     teams: joi_1.default.array().items(joi_1.default.string()).optional(),
 });
 const configurationSchema = joi_1.default.object().keys({
-    rules: joi_1.default.array().items(approvalGroupSchema).required(),
+    rules: joi_1.default.array().items(ruleSchema).required(),
 });
 const combineUsers = async function (pr, client, context, presetUsers, teams) {
     const users = new Map();
@@ -73,7 +73,7 @@ const combineUsers = async function (pr, client, context, presetUsers, teams) {
     }
     return users;
 };
-const runChecks = async function (pr, octokit, env, log, context) {
+const runChecks = async function (pr, octokit, log, context) {
     const diffResponse = await octokit.request(pr.diff_url);
     if (diffResponse.status !== 200) {
         log(`Failed to get the diff from ${pr.diff_url} (code ${diffResponse.status})`);
@@ -123,7 +123,7 @@ const runChecks = async function (pr, octokit, env, log, context) {
                 case "changed_files": {
                     changedFilesLoop: for (const file of changedFiles) {
                         if (condition.test(file)) {
-                            log(`Matched ${rule.condition} on the file ${file}`);
+                            log(`Matched expression "${rule.condition}" for the file name ${file}`);
                             matched = true;
                             break changedFilesLoop;
                         }
@@ -132,7 +132,7 @@ const runChecks = async function (pr, octokit, env, log, context) {
                 }
                 case "diff": {
                     if (condition.test(diff)) {
-                        log(`Matched ${rule.condition} on diff`);
+                        log(`Matched expression "${rule.condition}" on diff`);
                         matched = true;
                     }
                     break;
@@ -189,6 +189,7 @@ const runChecks = async function (pr, octokit, env, log, context) {
                 });
             }
         }
+        log("latestReviews", latestReviews);
         const problems = [];
         const usersToAskForReview = new Map();
         let highestMinApprovalsRule = null;
@@ -229,8 +230,8 @@ const runChecks = async function (pr, octokit, env, log, context) {
                 highestMinApprovalsRule = rule;
             }
         }
-        log("usersToAskForReview", usersToAskForReview);
         if (usersToAskForReview.size !== 0) {
+            log("usersToAskForReview", usersToAskForReview);
             const teams = new Set();
             const users = new Set();
             for (const [user, team] of usersToAskForReview) {
@@ -241,11 +242,9 @@ const runChecks = async function (pr, octokit, env, log, context) {
                     teams.add(team);
                 }
             }
-            log("reviewers", users);
-            log("team_reviewers", teams);
             await octokit.request("POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers", {
-                owner: github.context.repo.owner,
-                repo: github.context.repo.repo,
+                owner: pr.base.repo.owner.login,
+                repo: pr.base.repo.name,
                 pull_number: pr.number,
                 reviewers: Array.from(users),
                 team_reviewers: Array.from(teams),
@@ -273,20 +272,6 @@ const runChecks = async function (pr, octokit, env, log, context) {
     return "success";
 };
 const main = function () {
-    const env = {
-        GITHUB_SERVER_URL: "",
-        GITHUB_WORKFLOW: "",
-        GITHUB_REPOSITORY: "",
-        GITHUB_RUN_ID: "",
-    };
-    for (const varName in env) {
-        const value = process.env[varName];
-        if (value === undefined) {
-            core.setFailed(`Missing environment variable $${varName}`);
-            return;
-        }
-        env[varName] = value;
-    }
     const context = github.context;
     if (context.eventName !== "pull_request" &&
         context.eventName !== "pull_request_review") {
@@ -296,18 +281,46 @@ const main = function () {
     const log = console.log;
     const pr = context.payload.pull_request;
     const octokit = github.getOctokit(core.getInput("token"));
-    const exit = async function (state) {
-        const infoURL = `${env.GITHUB_SERVER_URL}/${env.GITHUB_REPOSITORY}/actions/runs/${env.GITHUB_RUN_ID}`;
+    const finish = async function (state) {
+        // Fallback URL in case we are not able to detect the current job
+        let detailsUrl = `${context.serverUrl}/${pr.base.repo.name}/runs/${context.runId}`;
+        if (state === "failure") {
+            // Fetch the jobs so that we'll be able to detect this step and provide a
+            // more accurate logging location
+            const jobsResponse = await octokit.rest.actions.listJobsForWorkflowRun({
+                owner: pr.base.repo.owner.login,
+                repo: pr.base.repo.name,
+                run_id: context.runId,
+            });
+            if (jobsResponse.status === 200) {
+                const { data: { jobs }, } = jobsResponse;
+                for (const job of jobs) {
+                    if (job.name === process.env.GITHUB_JOB) {
+                        let stepNumber = undefined;
+                        const actionRepositoryMatch = (process.env.GITHUB_ACTION_REPOSITORY ?? "").match(/[^/]*$/);
+                        if (actionRepositoryMatch !== null) {
+                            const thisActionStep = job.steps.find(function ({ name }) {
+                                return name === actionRepositoryMatch[0];
+                            });
+                            stepNumber = thisActionStep?.number;
+                        }
+                        detailsUrl = `${job.html_url}${stepNumber ? `#step:${stepNumber}:1` : ""}`;
+                        break;
+                    }
+                }
+            }
+            else {
+                log(`ERROR: Failed to fetch jobs for workflow run ${context.runId} (code ${jobsResponse.status})`);
+            }
+        }
         await octokit.rest.repos.createCommitStatus({
             owner: pr.base.repo.owner.login,
             repo: pr.base.repo.name,
             sha: pr.head.sha,
             state,
-            context: env.GITHUB_WORKFLOW,
-            target_url: `${infoURL}?check_suite_focus=true`,
-            ...(state === "success"
-                ? {}
-                : { description: "Please check Details for more information" }),
+            context: context.workflow,
+            target_url: detailsUrl,
+            description: "Please check Details for more information",
         });
         log(`Final state: ${state}`);
         // We always exit with 0 so that there are no lingering failure statuses in
@@ -315,13 +328,13 @@ const main = function () {
         // one to inform the outcome of this action.
         process.exit(0);
     };
-    runChecks(pr, octokit, env, log, context)
+    runChecks(pr, octokit, log, context)
         .then(function (state) {
-        exit(state);
+        finish(state);
     })
         .catch(function (error) {
         log(error);
-        exit("failure");
+        finish("failure");
     });
 };
 main();
