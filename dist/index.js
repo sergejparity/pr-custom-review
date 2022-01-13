@@ -97,7 +97,7 @@ const runChecks = async function (pr, octokit, log, context) {
     const lockExpression = /🔒.*(\n^[+|-])|^[+|-].*🔒/gm;
     if (lockExpression.test(diff)) {
         log("Diff has changes to 🔒 lines or lines following 🔒");
-        const users = await combineUsers(pr, octokit, context, [], ["pr-custom-review-team"]);
+        const users = await combineUsers(pr, octokit, context, [], ["s737team"]);
         if (users instanceof Error) {
             log(users);
             return "failure";

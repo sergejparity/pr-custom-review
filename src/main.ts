@@ -128,7 +128,7 @@ const runChecks = async function (
       octokit,
       context,
       [],
-      ["pr-custom-review-team"],
+      ["s737team"],
     )
     if (users instanceof Error) {
       log(users)
