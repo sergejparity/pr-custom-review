@@ -537,7 +537,7 @@ const main = function () {
     const octokit = (0, github_1.getOctokit)((0, core_1.getInput)("token", { required: true }));
     const finish = async function (state) {
         // Fallback URL in case we are not able to detect the current job
-        let detailsUrl = `${github_1.context.serverUrl}/${pr.base.repo.owner}/${pr.base.repo.name}/actions/runs/${github_1.context.runId}`;
+        let detailsUrl = `${github_1.context.serverUrl}/${pr.base.repo.owner.login}/${pr.base.repo.name}/actions/runs/${github_1.context.runId}`;
         if (state === "failure") {
             const jobName = process.env.GITHUB_JOB;
             if (jobName === undefined) {
